@@ -1,0 +1,9 @@
+export const firebaseConfig = {
+  apiKey: "AIzaSyAXeQlSwqXPJ1iT1NgrTmSPh2MeYG1MsJg",
+  authDomain: "anil-rentala.firebaseapp.com",
+  databaseURL: "https://anil-rentala-default-rtdb.firebaseio.com",
+  projectId: "anil-rentala",
+  storageBucket: "anil-rentala.firebasestorage.app",
+  messagingSenderId: "94163866842",
+  appId: "1:94163866842:web:12caea0e85572c37e341e3"
+};
