@@ -74,7 +74,15 @@ thead input{width:100%;font-size:12px}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-import { firebaseConfig } from "./firebase-config.js";   <!-- THIS IS NEW -->
+  const firebaseConfig = {
+  apiKey: "AIzaSyDvBg3NjojMJyfwS2ekhe6KnXjcgmV5qGQ",
+  authDomain: "anil-rentala.firebaseapp.com",
+  databaseURL: "https://anil-rentala-default-rtdb.firebaseio.com",
+  projectId: "anil-rentala",
+  storageBucket: "anil-rentala.firebasestorage.app",
+  messagingSenderId: "94163866842",
+  appId: "1:94163866842:web:12caea0e85572c37e341e3"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -440,6 +448,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
