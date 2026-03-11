@@ -70,30 +70,23 @@ thead input{width:100%;font-size:12px}
 
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAXeQlSwqXPJ1iT1NgrTmSPh2MeYG1MsJg",
-    authDomain: "anil-rentala.firebaseapp.com",
-    databaseURL: "https://anil-rentala-default-rtdb.firebaseio.com",
-    projectId: "anil-rentala",
-    storageBucket: "anil-rentala.firebasestorage.app",
-    messagingSenderId: "94163866842",
-    appId: "1:94163866842:web:12caea0e85572c37e341e3",
-    measurementId: "G-YXJ6HLSVBE"
-  };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+import { firebaseConfig } from "./firebase-config.js";   <!-- THIS IS NEW -->
 
-  window.db = db;
-  window.ref = ref;
-  window.set = set;
-  window.get = get;
-  window.child = child;
-  window.update = update;
-  window.remove = remove;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.db = db;
+window.ref = ref;
+window.set = set;
+window.get = get;
+window.child = child;
+window.update = update;
+window.remove = remove;
+
 </script>
 
 <!-- LOGIN PAGE -->
@@ -447,5 +440,6 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
