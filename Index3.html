@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard with Firebase</title>
+
+<!-- FONT AWESOME -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- BOOTSTRAP & DATATABLES -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css" />
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+/* your existing CSS here (unchanged) */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
+#loginPage{width:400px;margin:120px auto;background:#fff;padding:35px;border-radius:8px;box-shadow:0 5px 20px rgba(0,0,0,.15);text-align:center}
+#loginPage input{width:90%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ccc}
+#loginPage button{width:50%;padding:10px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:bold}
+#dashboard{display:none}
+.topbar{position: fixed;top: 0;left: 0;width: 100%;height: 60px;background: #58797d;color: #fff;display: flex;align-items: center;justify-content: space-between;padding: 0 20px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);z-index: 1030;}
+.content {margin-top: 70px; margin-left: 230px;padding: 15px;}
+.logo{font-size:20px;font-weight:bold;display:flex;align-items:center;gap:10px}
+.ribbon{display:flex;align-items:center;gap:10px}
+.ribbon button{padding:6px 12px;background:#58797d;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:bold}
+.user-area{display:flex;align-items:center;gap:15px;cursor:pointer}
+.user-area span:hover{text-decoration:underline}
+.sidebar{position:fixed;top:60px;left:0;width:220px;height:calc(100% - 60px);background:#58797d;color:#fff;padding-top:20px}
+.sidebar button{width:90%;margin:8px 10px;padding:12px;background:none;border:none;color:#fff;text-align:left;cursor:pointer;border-radius:4px}
+.sidebar button:hover{background:#374151}
+.content{margin-left:210px;margin-top:40px;padding:25px}
+.card{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
+th{background:#f1f5f9;font-weight:600}
+.action{cursor:pointer;margin-right:10px}
+.action i.fa-key{color:orange}
+.action i:hover{transform:scale(1.2)}
+.hidden{display:none}
+input,select{margin:5px 0;padding:8px;width:80%}
+button.create-btn{padding:8px 16px;margin-top:10px}
+body.dark{background:#0659;color:#212529}
+body.dark table{background:#1a1d23;color:#212529}
+table td:first-child, table th:first-child{text-align:left;padding-left:12px;font-weight:500}
+table td:not(:first-child){text-align:left}
+body.dark table th{background:#6c757d}
+table td{padding-top:10px;padding-bottom:10px}
+table tbody tr:hover{background:#f5f7fa}
+body.dark table tbody tr:hover{background:#2a2f37}
+thead input{width:100%;font-size:12px}
+.no-select{user-select:none}
+</style>
+</head>
+<body>
+
+<!-- Firebase setup script - MUST be before your main JS script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC4wmgi906oncca-L4xHNxqNQKgnT1lJIw",
+    authDomain: "anil-rentala.firebaseapp.com",
+    databaseURL: "https://anil-rentala-default-rtdb.firebaseio.com",
+    projectId: "anil-rentala",
+    storageBucket: "anil-rentala.firebasestorage.app",
+    messagingSenderId: "94163866842",
+    appId: "1:94163866842:web:12caea0e85572c37e341e3",
+    measurementId: "G-YXJ6HLSVBE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.db = db;
+  window.ref = ref;
+  window.set = set;
+  window.get = get;
+  window.child = child;
+  window.update = update;
+  window.remove = remove;
+</script>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <h2>User Login</h2>
+  <input id="loginUser" placeholder="Username" />
+  <input id="loginPass" type="password" placeholder="Password" />
+  <br /><br />
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="logo"><i class="fa fa-chart-line"></i> Admin System</div>
+    <div class="ribbon">
+      <button onclick="openWebInteraction('https://anotepad.com/')">Notepad</button>
+      <button onclick="openWebInteraction('https://chatgpt.com/')">ChatGPT</button>
+      <button onclick="createUserPage()" id="menuCreate"><i class="fa fa-user-plus"></i> Create User</button>
+      <button onclick="openExcelPage()"><i class="fa fa-file-excel"></i> Open Excel</button>
+    </div>
+    <div class="user-area" onclick="changePassword()">
+      <span id="displayUser"></span>
+      <button onclick="event.stopPropagation(); logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <button onclick="home()"><i class="fa fa-home"></i> Dashboard</button>
+    <button onclick="createUserPage()" id="menuCreate"><i class="fa fa-user-plus"></i> Create User</button>
+    <button onclick="viewUsers()" id="menuUsers"><i class="fa fa-users"></i> User Management</button>
+    <button onclick="openExcelPage()"><i class="fa fa-file-excel"></i> Excel Viewer</button>
+  </div>
+
+  <!-- Dynamic content container -->
+  <div class="content" id="contentArea"></div>
+</div>
+
+<script>
+const AUTO_LOGOUT_MINUTES = 15;
+const PASSWORD_EXPIRY_DAYS = 30;
+let timer;
+const contentArea = document.getElementById("contentArea");
+
+// Auto logout timer reset
+document.addEventListener("mousemove", resetTimer);
+document.addEventListener("keypress", resetTimer);
+function resetTimer(){
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    Swal.fire("Session Timeout", "Auto logout", "info");
+    logout();
+  }, AUTO_LOGOUT_MINUTES * 60000);
+}
+
+// ----------- FIREBASE USER FUNCTIONS ------------
+
+// Get users from Firebase Realtime Database
+async function getUsers() {
+  try {
+    const dbRef = ref(db);
+    const snapshot = await get(child(dbRef, "users"));
+    if (snapshot.exists()) {
+      return Object.values(snapshot.val());
+    }
+    return [];
+  } catch (error) {
+    console.error("Error getting users:", error);
+    return [];
+  }
+}
+
+// Save users array to Firebase Realtime Database
+async function saveUsers(users) {
+  try {
+    let usersObj = {};
+    users.forEach(u => {
+      usersObj[u.username] = u;
+    });
+    await set(ref(db, "users"), usersObj);
+  } catch (error) {
+    console.error("Error saving users:", error);
+  }
+}
+
+// ----------- LOGIN / LOGOUT ------------
+
+async function login(){
+
+let username = document.getElementById("loginUser").value.trim();
+let password = document.getElementById("loginPass").value.trim();
+
+try{
+
+const snapshot = await get(ref(db,"users"));
+
+if(!snapshot.exists()){
+Swal.fire("Error","No users found in database","error");
+return;
+}
+
+let users = snapshot.val();
+let foundUser = null;
+
+Object.values(users).forEach(user=>{
+if(user.username === username && user.password === password){
+foundUser = user;
+}
+});
+
+if(!foundUser){
+Swal.fire("Login Failed","Invalid username or password","error");
+return;
+}
+
+if(foundUser.status !== "Active"){
+Swal.fire("Access Denied","User inactive","error");
+return;
+}
+
+localStorage.setItem("loginUser",JSON.stringify(foundUser));
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+document.getElementById("displayUser").innerHTML = foundUser.username + " ("+foundUser.role+")";
+
+home();
+
+}catch(error){
+
+console.error(error);
+Swal.fire("Error","Database connection failed","error");
+
+}
+
+}
+
+function logout() {
+  localStorage.removeItem("loginUser");
+  document.getElementById("loginPage").style.display = "block";
+  document.getElementById("dashboard").style.display = "none";
+}
+
+// ----------- DASHBOARD ------------
+
+function home() {
+  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body"><h2>Dashboard</h2><p>Welcome to the Admin Dashboard</p></div></div>`;
+}
+
+// ----------- WEB LINKS ------------
+
+function openWebInteraction(url) {
+  window.open(url, "_blank");
+}
+
+// ----------- PASSWORD CHANGE ------------
+
+async function changePassword() {
+  let loggedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
+  if (!loggedUser.username) return;
+
+  const { value: newPassword } = await Swal.fire({
+    title: "Change Password",
+    input: "password",
+    inputLabel: "New Password",
+    inputPlaceholder: "Enter new password",
+    showCancelButton: true
+  });
+
+  if (newPassword) {
+    let users = await getUsers();
+    let user = users.find(u => u.username === loggedUser.username);
+    if (user) {
+      user.password = newPassword;
+      user.pwdDate = new Date().toISOString();
+      await saveUsers(users);
+      localStorage.setItem("loginUser", JSON.stringify(user));
+      Swal.fire("Success", "Password changed successfully", "success");
+    }
+  }
+}
+
+// ----------- USER MANAGEMENT ------------
+
+function createUserPage() {
+  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
+    <h2>Create User</h2>
+    <input id="newUsername" placeholder="Username"><br>
+    <input id="newUserID" placeholder="User ID"><br>
+    <input id="newDepartment" placeholder="Department"><br>
+    <input id="newPassword" type="password" placeholder="Password"><br>
+    <select id="newRole"><option value="Admin">Admin</option><option value="User">User</option></select><br>
+    <select id="newStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select><br>
+    <button class="create-btn" onclick="createUser()">Create</button>
+    </div></div>`;
+}
+
+async function createUser() {
+  let username = document.getElementById("newUsername").value.trim();
+  let userID = document.getElementById("newUserID").value.trim();
+  let dept = document.getElementById("newDepartment").value.trim();
+  let password = document.getElementById("newPassword").value.trim();
+  let role = document.getElementById("newRole").value;
+  let status = document.getElementById("newStatus").value;
+
+  if (!username || !userID || !dept || !password)
+    return Swal.fire("Error", "All fields are required", "error");
+
+  let users = await getUsers();
+
+  if (users.find(u => u.username === username || u.userID === userID))
+    return Swal.fire("Error", "Username or User ID already exists", "error");
+
+  users.push({ username, userID, department: dept, password, role, status, pwdDate: new Date().toISOString() });
+
+  await saveUsers(users);
+  Swal.fire("Success", "User created successfully", "success");
+  createUserPage();
+}
+
+async function viewUsers() {
+  let users = await getUsers();
+  let rows = users.map(u => `<tr>
+      <td>${u.username}</td><td>${u.userID}</td><td>${u.department}</td><td>${u.role}</td><td>${u.status}</td>
+      <td>
+          <span class="action" onclick="editUser('${u.username}')"><i class="fa fa-edit"></i></span>
+          <span class="action" onclick="deleteUser('${u.username}')"><i class="fa fa-trash"></i></span>
+          <span class="action" onclick="changeUserPassword('${u.username}')"><i class="fa fa-key"></i></span>
+      </td>
+  </tr>`).join("");
+  contentArea.innerHTML = `<div class="card"><div class="card-body"><h2>User Management</h2>
+      <table id="userTable" class="table table-bordered table-striped table-hover w-100">
+          <thead><tr><th>Username</th><th>User ID</th><th>Department</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+      </table>
+  </div></div>`;
+  $("#userTable").DataTable({
+    pageLength: 10,
+    orderCellsTop: true,
+    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+    scrollY: "400px",
+    scrollCollapse: true,
+    paging: true,
+    fixedHeader: true
+  });
+}
+
+async function editUser(username) {
+  let users = await getUsers();
+  let user = users.find(u => u.username === username);
+  if (!user) return;
+  const { value } = await Swal.fire({
+    title: `Edit User: ${username}`,
+    html: `<input id="editDepartment" value="${user.department}" class="swal2-input">
+      <select id="editRole" class="swal2-input"><option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option><option value="User" ${user.role === 'User' ? 'selected' : ''}>User</option></select>
+      <select id="editStatus" class="swal2-input"><option value="Active" ${user.status === 'Active' ? 'selected' : ''}>Active</option><option value="Inactive" ${user.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select>`,
+    showCancelButton: true,
+    preConfirm: () => ({
+      department: document.getElementById("editDepartment").value,
+      role: document.getElementById("editRole").value,
+      status: document.getElementById("editStatus").value
+    })
+  });
+  if (value) {
+    user.department = value.department;
+    user.role = value.role;
+    user.status = value.status;
+    await saveUsers(users);
+    Swal.fire("Success", "User updated", "success");
+    viewUsers();
+  }
+}
+
+async function deleteUser(username) {
+  const result = await Swal.fire({
+    title: `Delete user ${username}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete'
+  });
+  if (result.isConfirmed) {
+    let users = await getUsers();
+    users = users.filter(u => u.username !== username);
+    await saveUsers(users);
+    Swal.fire("Deleted!", "User deleted", "success");
+    viewUsers();
+  }
+}
+
+async function changeUserPassword(username) {
+  let users = await getUsers();
+  let user = users.find(u => u.username === username);
+  if (!user) return;
+  const { value: newPassword } = await Swal.fire({
+    title: `Change Password for ${username}`,
+    input: "password",
+    inputLabel: "New Password",
+    inputPlaceholder: "Enter new password",
+    showCancelButton: true
+  });
+  if (newPassword) {
+    user.password = newPassword;
+    user.pwdDate = new Date().toISOString();
+    await saveUsers(users);
+    Swal.fire("Success", "Password changed successfully", "success");
+    if (username === JSON.parse(localStorage.getItem("loginUser")).username) {
+      localStorage.setItem("loginUser", JSON.stringify(user));
+    }
+  }
+}
+
+// ----------- EXCEL VIEWER ------------
+
+function openExcelPage() {
+  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
+    <h2>Excel Viewer</h2>
+    <input type="file" id="excelFile" accept=".xls,.xlsx" />
+    <div id="excelContent" style="margin-top:10px;"></div>
+  </div></div>`;
+
+  document.getElementById("excelFile").addEventListener("change", function(e) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      let data = new Uint8Array(e.target.result);
+      let workbook = XLSX.read(data, {type:"array"});
+      let html = "";
+      workbook.SheetNames.forEach(sheetName => {
+        let worksheet = workbook.Sheets[sheetName];
+        html += `<h3>${sheetName}</h3>` + XLSX.utils.sheet_to_html(worksheet);
+      });
+      document.getElementById("excelContent").innerHTML = html;
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
+  });
+}
+
+// ----------- AUTO LOGIN if stored -----------
+
+window.onload = () => {
+  let user = JSON.parse(localStorage.getItem("loginUser"));
+  if (user && user.username) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
+    resetTimer();
+    home();
+  }
+};
+</script>
+
+</body>
+</html>
