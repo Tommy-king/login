@@ -179,68 +179,73 @@ async function saveUsers(users) {
   }
 }
 
+function updateUIAccess() {
+  const user = JSON.parse(localStorage.getItem("loginUser") || "{}");
+  const role = user.role || "";
+
+  // All buttons with data-role in ribbon and sidebar
+  document.querySelectorAll(".ribbon button[data-role], .sidebar button[data-role]").forEach(btn => {
+    const allowedRoles = btn.getAttribute("data-role").split(",");
+    if (allowedRoles.includes(role)) {
+      btn.style.display = "inline-block"; // or "block" for sidebar
+    } else {
+      btn.style.display = "none";
+    }
+  });
+}
 // ----------- LOGIN / LOGOUT ------------
 
-async function login(){
+async function login() {
+  let username = document.getElementById("loginUser").value.trim();
+  let password = document.getElementById("loginPass").value.trim();
 
-let username = document.getElementById("loginUser").value.trim();
-let password = document.getElementById("loginPass").value.trim();
+  try {
+    const snapshot = await get(ref(db, "users"));
 
-try{
+    if (!snapshot.exists()) {
+      Swal.fire("Error", "No users found in database", "error");
+      return;
+    }
 
-const snapshot = await get(ref(db,"users"));
+    let users = snapshot.val();
+    let foundUser = null;
 
-if(!snapshot.exists()){
-Swal.fire("Error","No users found in database","error");
-return;
+    // Find the user
+    Object.values(users).forEach(user => {
+      if (user.username === username && user.password === password) {
+        foundUser = user;
+      }
+    });
+
+    if (!foundUser) {
+      Swal.fire("Login Failed", "Invalid username or password", "error");
+      return;
+    }
+
+    if (foundUser.status !== "Active") {
+      Swal.fire("Access Denied", "User inactive", "error");
+      return;
+    }
+
+    // Save logged-in user
+    localStorage.setItem("loginUser", JSON.stringify(foundUser));
+
+    // Show dashboard and hide login
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("displayUser").innerHTML = `${foundUser.username} (${foundUser.role})`;
+
+    // Update UI access for buttons based on data-role
+    updateUIAccess();
+
+    // Load home page
+    home();
+
+  } catch (error) {
+    console.error(error);
+    Swal.fire("Error", "Database connection failed", "error");
+  }
 }
-
-let users = snapshot.val();
-let foundUser = null;
-
-Object.values(users).forEach(user=>{
-if(user.username === username && user.password === password){
-foundUser = user;
-}
-});
-
-if(!foundUser){
-Swal.fire("Login Failed","Invalid username or password","error");
-return;
-}
-
-if(foundUser.status !== "Active"){
-Swal.fire("Access Denied","User inactive","error");
-return;
-}
-
-localStorage.setItem("loginUser",JSON.stringify(foundUser));
-
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
-document.getElementById("displayUser").innerHTML = foundUser.username + " ("+foundUser.role+")";
-
-// Hide admin buttons if user
-if(foundUser.role !== "Admin"){
-
-  let createButtons = document.querySelectorAll("#menuCreate");
-  createButtons.forEach(btn => btn.style.display="none");
-
-  let userBtn = document.getElementById("menuUsers");
-  if(userBtn) userBtn.style.display="none";
-}
-
-home();
-
-}catch(error){
-
-console.error(error);
-Swal.fire("Error","Database connection failed","error");
-
-}
-
-}
-
 function logout() {
   localStorage.removeItem("loginUser");
   document.getElementById("loginPage").style.display = "block";
@@ -536,6 +541,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
