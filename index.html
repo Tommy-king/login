@@ -128,8 +128,13 @@ const PASSWORD_EXPIRY_DAYS = 30;
 let timer;
 const contentArea = document.getElementById("contentArea");
 
-  function getLoggedUser(){
+function getLoggedUser(){
   return JSON.parse(localStorage.getItem("loginUser") || "{}");
+}
+
+function isAdmin(){
+  let user = getLoggedUser();
+  return user.role === "Admin";
 }
 
 // Auto logout timer reset
@@ -214,13 +219,15 @@ document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
 document.getElementById("displayUser").innerHTML = foundUser.username + " ("+foundUser.role+")";
 
-// Hide admin menus if user
+// Hide admin buttons if user
 if(foundUser.role !== "Admin"){
-  document.getElementById("menuCreate").style.display="none";
-  document.getElementById("menuUsers").style.display="none";
-}
 
-home();
+  let createButtons = document.querySelectorAll("#menuCreate");
+  createButtons.forEach(btn => btn.style.display="none");
+
+  let userBtn = document.getElementById("menuUsers");
+  if(userBtn) userBtn.style.display="none";
+}
 
 home();
 
@@ -281,22 +288,33 @@ async function changePassword() {
 // ----------- USER MANAGEMENT ------------
 
 function createUserPage() {
-  let user = getLoggedUser();
 
-if(user.role !== "Admin"){
+if(!isAdmin()){
 Swal.fire("Access Denied","Admin only feature","error");
 return;
 }
-  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
-    <h2>Create User</h2>
-    <input id="newUsername" placeholder="Username"><br>
-    <input id="newUserID" placeholder="User ID"><br>
-    <input id="newDepartment" placeholder="Department"><br>
-    <input id="newPassword" type="password" placeholder="Password"><br>
-    <select id="newRole"><option value="Admin">Admin</option><option value="User">User</option></select><br>
-    <select id="newStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select><br>
-    <button class="create-btn" onclick="createUser()">Create</button>
-    </div></div>`;
+
+contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
+<h2>Create User</h2>
+
+<input id="newUsername" placeholder="Username"><br>
+<input id="newUserID" placeholder="User ID"><br>
+<input id="newDepartment" placeholder="Department"><br>
+<input id="newPassword" type="password" placeholder="Password"><br>
+
+<select id="newRole">
+<option value="Admin">Admin</option>
+<option value="User">User</option>
+</select><br>
+
+<select id="newStatus">
+<option value="Active">Active</option>
+<option value="Inactive">Inactive</option>
+</select><br>
+
+<button class="create-btn" onclick="createUser()">Create</button>
+
+</div></div>`;
 }
 
 async function createUser() {
@@ -328,35 +346,68 @@ return;
 }
 
 async function viewUsers() {
- let user = getLoggedUser();
+
+let user = getLoggedUser();
 
 if(user.role !== "Admin"){
 Swal.fire("Access Denied","Admin only feature","error");
 return;
 }
-  let rows = users.map(u => `<tr>
-      <td>${u.username}</td><td>${u.userID}</td><td>${u.department}</td><td>${u.role}</td><td>${u.status}</td>
-      <td>
-          <span class="action" onclick="editUser('${u.username}')"><i class="fa fa-edit"></i></span>
-          <span class="action" onclick="deleteUser('${u.username}')"><i class="fa fa-trash"></i></span>
-          <span class="action" onclick="changeUserPassword('${u.username}')"><i class="fa fa-key"></i></span>
-      </td>
-  </tr>`).join("");
-  contentArea.innerHTML = `<div class="card"><div class="card-body"><h2>User Management</h2>
-      <table id="userTable" class="table table-bordered table-striped table-hover w-100">
-          <thead><tr><th>Username</th><th>User ID</th><th>Department</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>${rows}</tbody>
-      </table>
-  </div></div>`;
-  $("#userTable").DataTable({
-    pageLength: 10,
-    orderCellsTop: true,
-    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
-    scrollY: "400px",
-    scrollCollapse: true,
-    paging: true,
-    fixedHeader: true
-  });
+
+let users = await getUsers();
+
+let rows = users.map(u => `<tr>
+<td>${u.username}</td>
+<td>${u.userID}</td>
+<td>${u.department}</td>
+<td>${u.role}</td>
+<td>${u.status}</td>
+
+<td>
+<span class="action" onclick="editUser('${u.username}')"><i class="fa fa-edit"></i></span>
+<span class="action" onclick="deleteUser('${u.username}')"><i class="fa fa-trash"></i></span>
+<span class="action" onclick="changeUserPassword('${u.username}')"><i class="fa fa-key"></i></span>
+</td>
+
+</tr>`).join("");
+
+contentArea.innerHTML = `<div class="card">
+<div class="card-body">
+
+<h2>User Management</h2>
+
+<table id="userTable" class="table table-bordered table-striped table-hover w-100">
+
+<thead>
+<tr>
+<th>Username</th>
+<th>User ID</th>
+<th>Department</th>
+<th>Role</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+${rows}
+</tbody>
+
+</table>
+
+</div>
+</div>`;
+
+$("#userTable").DataTable({
+pageLength: 10,
+orderCellsTop: true,
+lengthMenu: [[10,50,100,-1],[10,50,100,"All"]],
+scrollY: "400px",
+scrollCollapse: true,
+paging: true,
+fixedHeader: true
+});
+
 }
 
 async function editUser(username) {
@@ -484,6 +535,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
