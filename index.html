@@ -105,6 +105,7 @@ thead input{width:100%;font-size:12px}
         <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
         <button onclick="createUserPage()" data-role="Admin,User"><i class="fa fa-user-plus"></i> Create User</button>
         <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
+        <button onclick="openCalculatorPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Calculator</button>
     </div>
     <div class="user-area" onclick="changePassword()">
       <span id="displayUser"></span>
@@ -482,7 +483,6 @@ async function changeUserPassword(username) {
   }
 }
 
-// ----------- EXCEL VIEWER ------------
 // --------------------- EXCEL MODULE --------------------- //
 function formatDate(value){ let d=new Date(value); if(isNaN(d)) return value; return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear(); }
 function openExcelPage(){
@@ -526,6 +526,72 @@ function openExcelPage(){
     });
     document.getElementById('excelFile').click();
 }
+  // --------------------- CALCULATOR MODULE --------------------- //
+function openCalculatorPage(){
+
+contentArea.innerHTML = `
+<div class="card">
+<div class="card-body">
+<h2>Calculator</h2>
+
+<div style="max-width:260px;margin:auto;">
+<input type="text" id="calcDisplay" class="form-control mb-3 text-end" readonly>
+
+<div class="d-grid gap-2" style="grid-template-columns:repeat(4,1fr);display:grid;">
+
+<button class="btn btn-danger" onclick="clearCalc()">C</button>
+<button class="btn btn-secondary" onclick="appendCalc('%')">%</button>
+<button class="btn btn-warning" onclick="appendCalc('/')">/</button>
+<button class="btn btn-warning" onclick="appendCalc('*')">*</button>
+
+<button class="btn btn-light" onclick="appendCalc('7')">7</button>
+<button class="btn btn-light" onclick="appendCalc('8')">8</button>
+<button class="btn btn-light" onclick="appendCalc('9')">9</button>
+<button class="btn btn-warning" onclick="appendCalc('-')">-</button>
+
+<button class="btn btn-light" onclick="appendCalc('4')">4</button>
+<button class="btn btn-light" onclick="appendCalc('5')">5</button>
+<button class="btn btn-light" onclick="appendCalc('6')">6</button>
+<button class="btn btn-warning" onclick="appendCalc('+')">+</button>
+
+<button class="btn btn-light" onclick="appendCalc('1')">1</button>
+<button class="btn btn-light" onclick="appendCalc('2')">2</button>
+<button class="btn btn-light" onclick="appendCalc('3')">3</button>
+<button class="btn btn-success" onclick="calculateCalc()">=</button>
+
+<button class="btn btn-light" onclick="appendCalc('0')">0</button>
+<button class="btn btn-light" onclick="appendCalc('.')">.</button>
+
+</div>
+</div>
+
+</div>
+</div>
+`;
+}
+
+// Calculator Functions
+function appendCalc(value){
+    document.getElementById("calcDisplay").value += value;
+}
+
+function clearCalc(){
+    document.getElementById("calcDisplay").value = "";
+}
+
+function calculateCalc(){
+    try{
+        let expr = document.getElementById("calcDisplay").value;
+
+        // Convert % to /100
+        expr = expr.replace(/(\\d+(\\.\\d+)?)%/g,"($1/100)");
+
+        document.getElementById("calcDisplay").value = eval(expr);
+    }
+    catch{
+        alert("Invalid Expression");
+    }
+}
   // ----------- AUTO LOGIN if stored -----------
 
 //window.onload = () => {
@@ -543,6 +609,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
