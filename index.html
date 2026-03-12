@@ -114,9 +114,9 @@ thead input{width:100%;font-size:12px}
 
   <div class="sidebar">
     <button onclick="home()"><i class="fa fa-home"></i> Dashboard</button>
-    <button onclick="createUserPage()" id="menuCreate"><i class="fa fa-user-plus"></i> Create User</button>
-    <button onclick="viewUsers()" id="menuUsers"><i class="fa fa-users"></i> User Management</button>
-    <button onclick="openExcelPage()"><i class="fa fa-file-excel"></i> Excel Viewer</button>
+    <button onclick="createUserPage()" id="menuCreate" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+    <button onclick="viewUsers()" id="menuUsers" data-role="Admin"><i class="fa fa-users"></i> User Management</button>
+    <button onclick="openExcelPage()" data-role="Admin"> <i class="fa fa-file-excel"></i> Excel Viewer</button>
   </div>
 
   <!-- Dynamic content container -->
@@ -541,6 +541,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
