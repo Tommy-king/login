@@ -397,27 +397,166 @@ async function changeUserPassword(username) {
 
 // ----------- EXCEL VIEWER ------------
 
-function openExcelPage() {
-  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
-    <h2>Excel Viewer</h2>
-    <input type="file" id="excelFile" accept=".xls,.xlsx" />
-    <div id="excelContent" style="margin-top:10px;"></div>
-  </div></div>`;
+function openExcelPage(){
 
-  document.getElementById("excelFile").addEventListener("change", function(e) {
-    let reader = new FileReader();
-    reader.onload = function(e) {
-      let data = new Uint8Array(e.target.result);
-      let workbook = XLSX.read(data, {type:"array"});
-      let html = "";
-      workbook.SheetNames.forEach(sheetName => {
-        let worksheet = workbook.Sheets[sheetName];
-        html += `<h3>${sheetName}</h3>` + XLSX.utils.sheet_to_html(worksheet);
-      });
-      document.getElementById("excelContent").innerHTML = html;
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
-  });
+contentArea.innerHTML = `
+<div class="card">
+<div class="card-body">
+
+<h2>Excel Viewer</h2>
+
+<input type="file" id="excelFile" class="form-control mb-3">
+
+<ul class="nav nav-tabs mb-3" id="sheetTabs"></ul>
+
+<div class="tab-content" id="sheetContent"></div>
+
+</div>
+</div>
+`;
+
+document.getElementById("excelFile").addEventListener("change",function(e){
+
+let file = e.target.files[0];
+if(!file) return;
+
+let reader = new FileReader();
+
+reader.onload = function(event){
+
+let data = new Uint8Array(event.target.result);
+
+let workbook = XLSX.read(data,{type:"array",cellDates:true});
+
+let tabs = document.getElementById("sheetTabs");
+let content = document.getElementById("sheetContent");
+
+tabs.innerHTML="";
+content.innerHTML="";
+
+workbook.SheetNames.forEach(function(sheetName,index){
+
+let sheet = workbook.Sheets[sheetName];
+
+let json = XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+
+if(json.length===0) return;
+
+let headers = json[0];
+let rows = json.slice(1);
+
+let active = index===0 ? "active":"";
+
+tabs.innerHTML += `
+<li class="nav-item">
+<button class="nav-link ${active}" data-bs-toggle="tab" data-bs-target="#sheet${index}">
+${sheetName}
+</button>
+</li>
+`;
+
+let table = `<table id="table${index}" class="table table-bordered table-striped table-hover w-100">`;
+
+table += "<thead>";
+
+table += "<tr>";
+
+headers.forEach(h=>{
+table += `<th>${h}</th>`;
+});
+
+table += "</tr>";
+
+table += "<tr>";
+
+headers.forEach(()=>{
+table += `<th><input class="form-control form-control-sm columnFilter" placeholder="Filter"></th>`;
+});
+
+table += "</tr>";
+
+table += "</thead><tbody>";
+
+rows.forEach(r=>{
+table+="<tr>";
+headers.forEach((h,i)=>{
+table+=`<td>${r[i]||""}</td>`;
+});
+table+="</tr>";
+});
+
+table+="</tbody></table>";
+
+let show = index===0 ? "show active":"";
+
+content.innerHTML += `
+<div class="tab-pane fade ${show}" id="sheet${index}">
+${table}
+</div>
+`;
+
+});
+
+initTables();
+
+};
+
+reader.readAsArrayBuffer(file);
+
+});
+
+}
+
+
+//DataTables Initialization (SYNC)
+function initTables(){
+
+$("table").each(function(){
+
+if($.fn.DataTable.isDataTable(this)){
+$(this).DataTable().destroy();
+}
+
+let table = $(this).DataTable({
+
+pageLength:10,
+
+lengthMenu:[
+[10,25,50,100,-1],
+[10,25,50,100,"All"]
+],
+
+scrollY:"400px",
+
+scrollCollapse:true,
+
+paging:true,
+
+fixedHeader:true,
+
+dom:'Blfrtip',
+
+buttons:[
+'colvis',
+'excel',
+'csv',
+'print'
+]
+
+});
+
+$(this).closest('.dataTables_wrapper')
+.find("thead tr:eq(1) th input")
+.on("keyup change",function(){
+
+let index=$(this).parent().index();
+
+table.column(index).search(this.value).draw();
+
+});
+
+});
+
 }
 
 // ----------- AUTO LOGIN if stored -----------
