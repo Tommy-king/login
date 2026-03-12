@@ -100,10 +100,11 @@ thead input{width:100%;font-size:12px}
   <div class="topbar">
     <div class="logo"><i class="fa fa-chart-line"></i> Admin System</div>
     <div class="ribbon">
-      <button onclick="openWebInteraction('https://anotepad.com/')">Notepad</button>
-      <button onclick="openWebInteraction('https://chatgpt.com/')">ChatGPT</button>
-      <button onclick="createUserPage()" id="menuCreate"><i class="fa fa-user-plus"></i> Create User</button>
-      <button onclick="openExcelPage()"><i class="fa fa-file-excel"></i> Open Excel</button>
+<!-- Top Ribbon -->
+        <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
+        <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin">ChatGPT</button>
+        <button onclick="createUserPage()" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+        <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
     </div>
     <div class="user-area" onclick="changePassword()">
       <span id="displayUser"></span>
@@ -535,6 +536,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
