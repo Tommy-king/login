@@ -128,6 +128,10 @@ const PASSWORD_EXPIRY_DAYS = 30;
 let timer;
 const contentArea = document.getElementById("contentArea");
 
+  function getLoggedUser(){
+  return JSON.parse(localStorage.getItem("loginUser") || "{}");
+}
+
 // Auto logout timer reset
 document.addEventListener("mousemove", resetTimer);
 document.addEventListener("keypress", resetTimer);
@@ -210,6 +214,14 @@ document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
 document.getElementById("displayUser").innerHTML = foundUser.username + " ("+foundUser.role+")";
 
+// Hide admin menus if user
+if(foundUser.role !== "Admin"){
+  document.getElementById("menuCreate").style.display="none";
+  document.getElementById("menuUsers").style.display="none";
+}
+
+home();
+
 home();
 
 }catch(error){
@@ -269,6 +281,12 @@ async function changePassword() {
 // ----------- USER MANAGEMENT ------------
 
 function createUserPage() {
+  let user = getLoggedUser();
+
+if(user.role !== "Admin"){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
   contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
     <h2>Create User</h2>
     <input id="newUsername" placeholder="Username"><br>
@@ -282,6 +300,11 @@ function createUserPage() {
 }
 
 async function createUser() {
+  let user = getLoggedUser();
+if(user.role !== "Admin"){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
   let username = document.getElementById("newUsername").value.trim();
   let userID = document.getElementById("newUserID").value.trim();
   let dept = document.getElementById("newDepartment").value.trim();
@@ -305,7 +328,12 @@ async function createUser() {
 }
 
 async function viewUsers() {
-  let users = await getUsers();
+ let user = getLoggedUser();
+
+if(user.role !== "Admin"){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
   let rows = users.map(u => `<tr>
       <td>${u.username}</td><td>${u.userID}</td><td>${u.department}</td><td>${u.role}</td><td>${u.status}</td>
       <td>
@@ -456,6 +484,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
