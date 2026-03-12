@@ -509,37 +509,55 @@ reader.readAsArrayBuffer(file);
   
 // ----------- Data tables format -----------
 
-let table = $(this).DataTable({
-pageLength:10,
-lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
-scrollY:"400px",
-scrollCollapse:true,
-paging:true,
-fixedHeader:true,
-dom:'Bfrtip',
-buttons:[
-{
-extend:'colvis',
-text:'Column Visibility'
-},
-{
-extend:'excel',
-text:'Export Excel'
-},
-{
-extend:'csv',
-text:'Export CSV'
-},
-{
-extend:'print',
-text:'Print'
+function initTables(){
+
+$("table").each(function(){
+
+if($.fn.DataTable.isDataTable(this)){
+$(this).DataTable().destroy();
 }
+
+let table = $(this).DataTable({
+
+pageLength:10,
+
+lengthMenu:[
+[10,25,50,100,-1],
+[10,25,50,100,"All"]
+],
+
+scrollY:"400px",
+
+scrollCollapse:true,
+
+paging:true,
+
+fixedHeader:true,
+
+dom:'Blfrtip',
+
+buttons:[
+'colvis',
+'excel',
+'csv',
+'print'
 ]
+
 });
 
-table.buttons().container()
-.appendTo($(this).closest('.dataTables_wrapper').find('.col-md-6:eq(0)'));
-  
+$(this).closest('.dataTables_wrapper')
+.find("thead tr:eq(1) th input")
+.on("keyup change",function(){
+
+let index=$(this).parent().index();
+
+table.column(index).search(this.value).draw();
+
+});
+
+});
+
+}
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
@@ -557,6 +575,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
