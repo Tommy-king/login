@@ -102,8 +102,8 @@ thead input{width:100%;font-size:12px}
     <div class="ribbon">
 <!-- Top Ribbon -->
         <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
-        <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin">ChatGPT</button>
-        <button onclick="createUserPage()" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+        <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
+        <button onclick="createUserPage()" data-role="Admin,User"><i class="fa fa-user-plus"></i> Create User</button>
         <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
     </div>
     <div class="user-area" onclick="changePassword()">
@@ -180,16 +180,18 @@ async function saveUsers(users) {
 }
 
 function updateUIAccess() {
-  const user = JSON.parse(localStorage.getItem("loginUser") || "{}");
-  const role = user.role || "";
+  let loggedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
+  let role = loggedUser.role || "";
 
-  // All buttons with data-role in ribbon and sidebar
-  document.querySelectorAll(".ribbon button[data-role], .sidebar button[data-role]").forEach(btn => {
-    const allowedRoles = btn.getAttribute("data-role").split(",");
-    if (allowedRoles.includes(role)) {
-      btn.style.display = "inline-block"; // or "block" for sidebar
+  // Select all buttons in sidebar and ribbon that have data-role
+  let buttons = document.querySelectorAll("[data-role]");
+
+  buttons.forEach(btn => {
+    let roles = btn.getAttribute("data-role").split(",").map(r => r.trim());
+    if (roles.includes(role)) {
+      btn.style.display = "inline-block"; // show
     } else {
-      btn.style.display = "none";
+      btn.style.display = "none"; // hide
     }
   });
 }
@@ -541,6 +543,7 @@ function openExcelPage(){
 </body>
 
 </html>
+
 
 
 
