@@ -528,6 +528,7 @@ function openExcelPage(){
     document.getElementById('excelFile').click();
 }
   // --------------------- CALCULATOR MODULE --------------------- //
+// --------------------- CALCULATOR MODULE --------------------- //
 function openCalculatorPage(){
 
 contentArea.innerHTML = `
@@ -535,10 +536,14 @@ contentArea.innerHTML = `
 <div class="card-body">
 <h2>Calculator</h2>
 
-<div style="max-width:260px;margin:auto;">
-<input type="text" id="calcDisplay" class="form-control mb-3 text-end" readonly>
+<div style="width:320px;margin:auto">
 
-<div class="d-grid gap-2" style="grid-template-columns:repeat(4,1fr);display:grid;">
+<input type="text" id="calcDisplay"
+class="form-control mb-3 text-end"
+style="height:50px;font-size:22px"
+readonly>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
 
 <button class="btn btn-danger" onclick="clearCalc()">C</button>
 <button class="btn btn-secondary" onclick="appendCalc('%')">%</button>
@@ -567,32 +572,57 @@ contentArea.innerHTML = `
 </div>
 
 </div>
-</div>
-`;
+</div>`;
 }
 
+
 // Calculator Functions
-function appendCalc(value){
-    document.getElementById("calcDisplay").value += value;
+function appendCalc(val){
+document.getElementById("calcDisplay").value += val;
 }
 
 function clearCalc(){
-    document.getElementById("calcDisplay").value = "";
+document.getElementById("calcDisplay").value = "";
 }
 
 function calculateCalc(){
-    try{
-        let expr = document.getElementById("calcDisplay").value;
+let expr = document.getElementById("calcDisplay").value;
 
-        // Convert % to /100
-        expr = expr.replace(/(\\d+(\\.\\d+)?)%/g,"($1/100)");
+expr = expr.replace(/(\d+(\.\d+)?)%/g,"($1/100)");
 
-        document.getElementById("calcDisplay").value = eval(expr);
-    }
-    catch{
-        alert("Invalid Expression");
-    }
+try{
+document.getElementById("calcDisplay").value = eval(expr);
 }
+catch{
+alert("Invalid Expression");
+}
+}
+
+  // Keyboard Support
+document.addEventListener("keydown", function(e){
+
+let display = document.getElementById("calcDisplay");
+if(!display) return;
+
+let key = e.key;
+
+if(!isNaN(key) || key=="." || key=="+" || key=="-" || key=="*" || key=="/" || key=="%"){
+display.value += key;
+}
+
+if(key=="Enter"){
+calculateCalc();
+}
+
+if(key=="Backspace"){
+display.value = display.value.slice(0,-1);
+}
+
+if(key=="Escape"){
+display.value = "";
+}
+
+});
   // ----------- AUTO LOGIN if stored -----------
 
 //window.onload = () => {
@@ -610,6 +640,7 @@ function calculateCalc(){
 </body>
 
 </html>
+
 
 
 
