@@ -648,13 +648,16 @@ contentArea.innerHTML = `
 
 <div class="row mb-3">
 
-<div class="col-md-3">
-<div class="card bg-danger text-white">
-<div class="card-body">
-<h5>Pending</h5>
-<h3 id="pendingCount">0</h3>
+<div class="col">
+<input id="taskTitle" class="form-control" placeholder="Task Title">
 </div>
-</div>
+
+<div class="col">
+<select id="taskPriority" class="form-control">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
 </div>
 
 <div class="col-md-3">
