@@ -417,6 +417,9 @@ contentArea.innerHTML = `<div class="card">
 
 <h2>User Management</h2>
 
+
+
+
 </div>
 </div>`;
 
@@ -820,10 +823,6 @@ return `${day}-${month}-${year}`;
 async function loadTasks(){
 
 const snapshot = await get(ref(db,"tasks"));
-if(!snapshot.exists()){
-document.getElementById("taskTable").innerHTML="";
-return;
-}
 
 let rows="";
 
@@ -850,7 +849,7 @@ rows+=`
 <td>${formatDate(t.due)}</td>
 
 <td>
-<select onchange="updateStatus('${t.id}',this.value)" style="${statusColor(t.status)}">
+<select onchange="updateStatus('${t.id}',this.value)" class="form-select form-select-sm">
 <option ${t.status==="Pending"?"selected":""}>Pending</option>
 <option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
 <option ${t.status==="Completed"?"selected":""}>Completed</option>
@@ -879,27 +878,45 @@ onclick="deleteTask('${t.id}')"></i>
 
 document.getElementById("taskTable").innerHTML = rows;
 
+/* destroy old table */
+
 if ($.fn.DataTable.isDataTable('#todoTable')) {
 $('#todoTable').DataTable().destroy();
 }
 
+/* initialize datatable */
+
+setTimeout(()=>{
+
 $('#todoTable').DataTable({
+
 pageLength:10,
 lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
 scrollY:"400px",
 scrollCollapse:true,
 paging:true,
 fixedHeader:true,
-scrollX:true,
-dom:'Blfrtip',
+dom:'Bfrtip',
+
 buttons:[
 'colvis',
-{extend:'excel',title:'Task_Report'},
-{extend:'csv',title:'Task_Report'},
-{extend:'print'}
+{
+extend:'excel',
+title:'Task_Report'
+},
+{
+extend:'csv',
+title:'Task_Report'
+},
+{
+extend:'print'
+}
 ]
+
 });
-  
+
+},200);
+
   
 /* COLUMN FILTER */
 
@@ -916,10 +933,11 @@ table.column(i).search(this.value).draw();
 });
 
 });
+document.getElementById("taskTable").innerHTML = rows;
 
 }
 
- 
+  
 async function toggleTask(id){
 
 let loggedUser=getLoggedUser();
@@ -942,7 +960,7 @@ let newStatus = task.status==="Pending" ? "Completed" : "Pending";
 
 await update(ref(db,"tasks/"+id),{status:newStatus});
 
-await loadTasks();
+loadTasks();
 
 }
 
@@ -966,7 +984,7 @@ if(!newTitle) return;
 
 await update(ref(db,"tasks/"+id),{title:newTitle});
 
-await loadTasks();
+loadTasks();
 
 }
 
@@ -990,11 +1008,12 @@ await remove(ref(db,"tasks/"+id));
 
 Swal.fire("Deleted","Task removed","success");
 
-await loadTasks();
+loadTasks();
+
 }
 
-  
 async function taskComments(id){
+
 let comment = await Swal.fire({
 title:"Add Comment",
 input:"text",
@@ -1020,12 +1039,12 @@ await set(ref(db,"tasks/"+id+"/comments"),comments);
 
 Swal.fire({
 icon:"success",
-title:"Comment added",
-timer:1200,
-showConfirmButton:false
+title:"Comment added"
 });
 
-await loadTasks();
+/* refresh table */
+loadTasks();
+
 }
 
   
@@ -1185,8 +1204,74 @@ await update(ref(db,"tasks/"+id),{status});
 });
 
 }
+// todo list export Excel Export
+async function exportTasks(){
 
- //Search Task 
+const snapshot=await get(ref(db,"tasks"));
+
+let data=[];
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+data.push({
+
+Task:t.title,
+Priority:t.priority,
+Due:formatDate(t.due),
+Status:t.status,
+User:t.assignedTo
+
+});
+
+});
+
+let ws=XLSX.utils.json_to_sheet(data);
+
+let wb=XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"Tasks");
+
+XLSX.writeFile(wb,"TaskReport.xlsx");
+
+}
+
+//Due Date Range Filter
+async function filterDate(){
+
+let from=document.getElementById("fromDate").value;
+let to=document.getElementById("toDate").value;
+
+const snapshot=await get(ref(db,"tasks"));
+
+let rows="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(!t.due) return;
+
+if(t.due>=from && t.due<=to){
+
+rows+=`<tr>
+<td>${t.title}</td>
+<td>${t.priority}</td>
+<td>${formatDate(t.due)}</td>
+<td>${t.status}</td>
+<td>${t.assignedTo}</td>
+</tr>`;
+
+}
+
+});
+
+document.getElementById("taskTable").innerHTML=rows;
+
+}
+
+  //Search Task 
 
 function searchTasks(){
 
@@ -1203,7 +1288,46 @@ $(this).text().toLowerCase().indexOf(value)>-1
 });
 
 }
+  
+  //Todo DataTable Initialization
+function initTodoTable(){
 
+if ($.fn.DataTable.isDataTable('#todoTable')) {
+$('#todoTable').DataTable().destroy();
+}
+
+let table = $('#todoTable').DataTable({
+
+dom: 'Bfrtip',
+
+buttons: [
+'colvis',
+'excel',
+'csv',
+'print'
+],
+
+pageLength:10,
+
+orderCellsTop:true,
+
+fixedHeader:true,
+
+scrollX:true
+
+});
+
+/* column filters */
+
+$('#todoTable thead tr:eq(1) th input').on('keyup change', function(){
+
+let index=$(this).parent().index();
+
+table.column(index).search(this.value).draw();
+
+});
+
+}
 
 //update to do status
 async function updateStatus(id,status){
@@ -1226,7 +1350,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status updated");
 
-await loadTasks();
+loadTasks();
 
 }
 
@@ -1274,33 +1398,3 @@ btn.style.display="none";
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
