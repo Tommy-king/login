@@ -1258,6 +1258,46 @@ $(this).text().toLowerCase().indexOf(value)>-1
 });
 
 }
+
+    //Todo DataTable Initialization
+function initTodoTable(){
+
+if ($.fn.DataTable.isDataTable('#todoTable')) {
+$('#todoTable').DataTable().destroy();
+}
+
+let table = $('#todoTable').DataTable({
+
+dom: 'Bfrtip',
+
+buttons: [
+'colvis',
+'excel',
+'csv',
+'print'
+],
+
+pageLength:10,
+
+orderCellsTop:true,
+
+fixedHeader:true,
+
+scrollX:true
+
+});
+
+/* column filters */
+
+$('#todoTable thead tr:eq(1) th input').on('keyup change', function(){
+
+let index=$(this).parent().index();
+
+table.column(index).search(this.value).draw();
+
+});
+
+}
   
 //update to do status
 async function updateStatus(id,status){
