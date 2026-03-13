@@ -416,22 +416,35 @@ contentArea.innerHTML = `<div class="card">
 
 <h2>User Management</h2>
 
-<table id="userTable" class="table table-bordered table-striped table-hover w-100">
+<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
 
 <thead>
+
 <tr>
-<th>Username</th>
-<th>User ID</th>
-<th>Department</th>
-<th>Role</th>
+<th>Task</th>
+<th>Priority</th>
+<th>Due</th>
 <th>Status</th>
-<th>Actions</th>
+<th>User</th>
+<th>Edit</th>
+<th>Comment</th>
+<th>Delete</th>
 </tr>
+
+<tr>
+<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+
 </thead>
 
-<tbody>
-${rows}
-</tbody>
+<tbody id="taskTable"></tbody>
 
 </table>
 
@@ -840,9 +853,17 @@ const snapshot = await get(ref(db,"tasks"));
 
 let rows="";
 
+let loggedUser=getLoggedUser();
+
 snapshot.forEach(child=>{
 
 let t=child.val();
+
+/* USER RESTRICTION */
+
+if(loggedUser.role!=="Admin" && t.assignedTo!==loggedUser.username){
+return;
+}
 
 rows+=`
 
@@ -852,15 +873,19 @@ rows+=`
 
 <td>${t.priority}</td>
 
-<td>${t.due||"-"}</td>
+<td>${formatDate(t.due)}</td>
 
-<td onclick="toggleTask('${t.id}')">
+<td onclick="toggleTask('${t.id}')" style="cursor:pointer">
+
 <span style="color:${
 t.status==="Pending"?"red":
 t.status==="In Progress"?"orange":"green"
 };font-weight:bold">
+
 ${t.status}
+
 </span>
+
 </td>
 
 <td>${t.assignedTo}</td>
@@ -870,8 +895,11 @@ ${t.status}
 onclick="editTask('${t.id}')"></i>
 </td>
 
-<td onclick="taskComments('${t.id}')" style="cursor:pointer">
+<td onclick="taskComments('${t.id}')"
+style="cursor:pointer">
+
 ${t.comments && t.comments.length ? t.comments[t.comments.length-1].text : "-"}
+
 </td>
 
 <td>
@@ -885,9 +913,60 @@ onclick="deleteTask('${t.id}')"></i>
 
 });
 
-document.getElementById("taskTable").innerHTML=rows;
+document.getElementById("taskTable").innerHTML = rows;
+
+
+/* DESTROY OLD TABLE */
+
+if($.fn.DataTable.isDataTable("#todoTable")){
+$("#todoTable").DataTable().destroy();
+}
+
+
+/* INITIALIZE DATATABLE */
+
+let table = $("#todoTable").DataTable({
+
+pageLength:10,
+
+orderCellsTop:true,
+
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+
+scrollY:"400px",
+
+scrollCollapse:true,
+
+paging:true,
+
+fixedHeader:true,
+
+dom:'Blfrtip',
+
+buttons:['colvis','excel','csv','print']
+
+});
+
+
+/* COLUMN FILTER */
+
+$("#todoTable thead tr:eq(1) th input").each(function(i){
+
+$(this).on("keyup change",function(){
+
+if(table.column(i).search()!==this.value){
+
+table.column(i).search(this.value).draw();
 
 }
+
+});
+
+});
+
+}
+
+  
 
 async function toggleTask(id){
 
@@ -1246,6 +1325,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
