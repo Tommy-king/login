@@ -893,14 +893,21 @@ async function toggleTask(id){
 
 let loggedUser=getLoggedUser();
 
-snapshot.forEach(child=>{
+const snap = await get(ref(db,"tasks/"+id));
 
-let t=child.val();
+let task = snap.val();
 
-if(loggedUser.role!=="Admin" && t.assignedTo!==loggedUser.username) return;
+if(!task) return;
+
+if(loggedUser.role!=="Admin" && task.assignedTo!==loggedUser.username){
+
+Swal.fire("Access Denied","You can't change this task","error");
+
+return;
+
 }
 
-let newStatus = task.status==="Pending" ? "Completed":"Pending";
+let newStatus = task.status==="Pending" ? "Completed" : "Pending";
 
 await update(ref(db,"tasks/"+id),{status:newStatus});
 
@@ -908,6 +915,7 @@ loadTasks();
 
 }
 
+  
 async function editTask(id){
 
 let loggedUser=getLoggedUser();
@@ -1092,7 +1100,7 @@ card.className="kanban-card";
 
 card.dataset.id=t.id;
 
-card.innerHTML=`<b>${t.title}</b><br>${t.user}`;
+card.innerHTML=`<b>${t.title}</b><br>${t.assignedTo}`;
 
 if(t.status=="Pending")
 document.getElementById("pendingCol").appendChild(card);
@@ -1238,6 +1246,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
