@@ -128,21 +128,17 @@ cursor:grab;
 <!-- Top Ribbon -->
         <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
         <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
-        <button onclick="createUserPage()" data-role="Admin,User"><i class="fa fa-user-plus"></i> Create User</button>
+        <button onclick="createUserPage()" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
         <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
-        <button onclick="openCalculatorPage()" data-role="Admin,User"><i class="fa-solid fa-calculator"></i> Calculator</button>
-        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List</button>
+        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List </button>
     </div>
+    
       <div class="user-area">
-      
-      <i class="fa fa-bell" onclick="openNotifications()" style="cursor:pointer"></i>
-      <span id="notifCount"></span>
-      
-      <span id="displayUser"></span>
-      
-      <button onclick="event.stopPropagation(); logout()">Logout</button>
-      
-      </div>
+            <i class="fa fa-bell" onclick="openNotifications()" style="cursor:pointer"></i>
+            <span id="notifCount"></span>
+            <span id="displayUser"></span>
+            <button onclick="event.stopPropagation(); logout()">Logout</button>
+       </div>
   </div>
 
   <div class="sidebar">
@@ -705,12 +701,13 @@ onkeyup="searchTasks()">
 
 <table id="todoTable" class="table table-bordered table-striped table-hover w-100">
 
-<thead>
+<thead class="table-dark">
 <tr>
 <th>Task</th>
 <th>Priority</th>
 <th>Due</th>
 <th>Status</th>
+<th>Completed Date</th>
 <th>User</th>
 <th>Edit</th>
 <th>Comment</th>
@@ -851,31 +848,21 @@ rows+=`
 
 <td>${formatDate(t.due)}</td>
 
-<td onclick="toggleTask('${t.id}')" style="cursor:pointer">
-
-<span style="color:${
-t.status==="Pending"?"red":
-t.status==="In Progress"?"orange":"green"
-};font-weight:bold">
-
-${t.status}
-
-</span>
-
+<td>
+<select onchange="updateStatus('${t.id}',this.value)" class="form-select form-select-sm">
+<option ${t.status==="Pending"?"selected":""}>Pending</option>
+<option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
+<option ${t.status==="Completed"?"selected":""}>Completed</option>
+</select>
 </td>
 
+<td>${t.completedDate || "-"}</td> 
 <td>${t.assignedTo}</td>
+<td> <i class="fa fa-edit action" onclick="editTask('${t.id}')"></i> </td>
 
 <td>
-<i class="fa fa-edit action"
-onclick="editTask('${t.id}')"></i>
-</td>
-
-<td onclick="taskComments('${t.id}')"
-style="cursor:pointer">
-
+<i class="fa fa-comment action"onclick="taskComments('${t.id}')"></i>
 ${t.comments && t.comments.length ? t.comments[t.comments.length-1].text : "-"}
-
 </td>
 
 <td>
@@ -1341,6 +1328,41 @@ table.column(index).search(this.value).draw();
 });
 
 }
+
+//update to do status
+async function updateStatus(id,status){
+
+let updateData={status:status};
+
+if(status==="Completed"){
+
+let today=new Date().toLocaleDateString("en-GB");
+
+updateData.completedDate=today;
+
+}else{
+
+updateData.completedDate="";
+
+}
+
+await update(ref(db,"tasks/"+id),updateData);
+
+Swal.fire("Status updated");
+
+loadTasks();
+
+}
+
+function statusColor(status){
+
+if(status==="Pending") return "color:red;font-weight:bold";
+
+if(status==="In-Progress") return "color:orange;font-weight:bold";
+
+if(status==="Completed") return "color:green;font-weight:bold";
+
+}
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
@@ -1353,12 +1375,30 @@ window.onload = () => {
     home();
   }
 };
+
+  //Assigning role functions w.r.t the all buttons
+function applyRoleAccess(){
+
+let role = getLoggedUser().role;
+
+document.querySelectorAll("[data-role]").forEach(btn=>{
+
+let roles = btn.getAttribute("data-role").split(",");
+
+if(!roles.includes(role)){
+btn.style.display="none";
+}
+
+});
+
+}
   
 </script>
 
 </body>
 
 </html>
+
 
 
 
