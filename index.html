@@ -845,7 +845,13 @@ rows+=`
 
 <td>${formatDate(t.due)}</td>
 
-<td style="${statusColor(t.status)}">${t.status}</td>
+<td>
+<select onchange="updateStatus('${t.id}',this.value)" style="${statusColor(t.status)}">
+<option ${t.status==="Pending"?"selected":""}>Pending</option>
+<option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
+<option ${t.status==="Completed"?"selected":""}>Completed</option>
+</select>
+</td>
 
 <td>${t.completedDate || "-"}</td> 
 <td>${t.assignedTo}</td>
@@ -932,7 +938,7 @@ document.getElementById("taskTable").innerHTML = rows;
 
 }
 
-  
+ 
 async function toggleTask(id){
 
 let loggedUser=getLoggedUser();
@@ -1004,11 +1010,10 @@ await remove(ref(db,"tasks/"+id));
 Swal.fire("Deleted","Task removed","success");
 
 loadTasks();
-
 }
 
+  
 async function taskComments(id){
-
 let comment = await Swal.fire({
 title:"Add Comment",
 input:"text",
@@ -1036,10 +1041,8 @@ Swal.fire({
 icon:"success",
 title:"Comment added"
 });
-
 /* refresh table */
 loadTasks();
-
 }
 
   
@@ -1200,41 +1203,7 @@ await update(ref(db,"tasks/"+id),{status});
 
 }
 
-  //Due Date Range Filter
-async function filterDate(){
-
-let from=document.getElementById("fromDate").value;
-let to=document.getElementById("toDate").value;
-
-const snapshot=await get(ref(db,"tasks"));
-
-let rows="";
-
-snapshot.forEach(child=>{
-
-let t=child.val();
-
-if(!t.due) return;
-
-if(t.due>=from && t.due<=to){
-
-rows+=`<tr>
-<td>${t.title}</td>
-<td>${t.priority}</td>
-<td>${formatDate(t.due)}</td>
-<td>${t.status}</td>
-<td>${t.assignedTo}</td>
-</tr>`;
-
-}
-
-});
-
-document.getElementById("taskTable").innerHTML=rows;
-
-}
-
-  //Search Task 
+ //Search Task 
 
 function searchTasks(){
 
