@@ -96,7 +96,7 @@ cursor:grab;
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
   import { firebaseConfig } from "./firebase-config.js";
 
   const app = initializeApp(firebaseConfig);
@@ -133,12 +133,27 @@ cursor:grab;
         <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List </button>
     </div>
     
-      <div class="user-area">
-            <i class="fa fa-bell" onclick="openNotifications()" style="cursor:pointer"></i>
-            <span id="notifCount"></span>
-            <span id="displayUser"></span>
-            <button onclick="event.stopPropagation(); logout()">Logout</button>
-       </div>
+    <div class="user-area">
+    
+    <i class="fa fa-bell" style="cursor:pointer"></i>
+    
+    <span id="notifyCount"
+    style="
+    position:absolute;
+    top:-5px;
+    right:-10px;
+    background:red;
+    color:white;
+    border-radius:50%;
+    padding:3px 7px;
+    font-size:11px;
+    ">0</span>
+    
+    <span id="displayUser" onclick="changePassword()" style="cursor:pointer;font-weight:bold;"></span>
+    
+    <button onclick="event.stopPropagation(); logout()">Logout</button>
+    
+    </div>
   </div>
 
   <div class="sidebar">
@@ -1318,34 +1333,30 @@ return "";
 }
 
 
-async function openNotifications(){
+function listenNotifications(){
 
-const user=getLoggedUser().username;
+const user = getLoggedUser().username;
 
-const snapshot=await get(ref(db,"tasks"));
+onValue(ref(db,"tasks"), snapshot => {
 
-let list="";
+let count = 0;
 
-snapshot.forEach(child=>{
+snapshot.forEach(child => {
 
-let t=child.val();
+let t = child.val();
 
-if(t.user==user && t.status=="Pending"){
-
-list+=`<li>${t.title}</li>`;
-
+if(t.assignedTo === user && t.status === "Pending"){
+count++;
 }
 
 });
 
-Swal.fire({
-
-title:"Your Tasks",
-html:`<ul>${list}</ul>`
+document.getElementById("notifyCount").innerText = count;
 
 });
 
 }
+  
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
