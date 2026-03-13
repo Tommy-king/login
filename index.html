@@ -105,7 +105,8 @@ thead input{width:100%;font-size:12px}
         <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
         <button onclick="createUserPage()" data-role="Admin,User"><i class="fa fa-user-plus"></i> Create User</button>
         <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
-        <button onclick="openCalculatorPage()" data-role="Admin,User"><i class="fa-solid fa-calculator"></i> Calculator
+        <button onclick="openCalculatorPage()" data-role="Admin,User"><i class="fa-solid fa-calculator"></i> Calculator</button>
+        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List
 </button>
     </div>
     <div class="user-area" onclick="changePassword()">
@@ -623,6 +624,64 @@ display.value = "";
 }
 
 });
+
+  // ...........To do list ...................//
+function openTodoPage(){
+
+contentArea.innerHTML = `
+
+<div class="card">
+
+<h2>My Tasks</h2>
+
+<div style="margin-bottom:10px">
+
+<input id="taskTitle" placeholder="Task Title">
+
+<select id="priority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+
+<input type="date" id="dueDate">
+
+<button onclick="addTask()">Add Task</button>
+
+</div>
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+<th>Task</th>
+<th>Priority</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Done</th>
+<th>Delete</th>
+</tr>
+
+</thead>
+
+<tbody id="taskTable"></tbody>
+
+</table>
+
+</div>
+
+`;
+
+loadTasks();
+
+}
+
+//function openTodoPage(){
+
+//window.location.href="todo.html";
+
+//}
   // ----------- AUTO LOGIN if stored -----------
 
 //window.onload = () => {
@@ -640,6 +699,7 @@ display.value = "";
 </body>
 
 </html>
+
 
 
 
