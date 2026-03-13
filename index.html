@@ -84,6 +84,48 @@ thead input{width:100%;font-size:12px}
   window.child = child;
   window.update = update;
   window.remove = remove;
+
+
+  window.openTodoPage = function(){
+
+document.getElementById("contentArea").innerHTML = `
+
+<h2>My Tasks</h2>
+
+<input id="taskTitle" placeholder="Task Title">
+
+<select id="priority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+
+<input type="date" id="dueDate">
+
+<button onclick="addTask()">Add Task</button>
+
+<br><br>
+
+<table border="1" width="100%">
+
+<tr>
+<th>Task</th>
+<th>Priority</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Done</th>
+<th>Delete</th>
+</tr>
+
+<tbody id="taskTable"></tbody>
+
+</table>
+
+`;
+
+loadTasks();
+
+}
 </script>
 
 <!-- LOGIN PAGE -->
@@ -625,58 +667,105 @@ display.value = "";
 
 });
 
-  // ...........To do list ...................//
-function openTodoPage(){
+//**********ToDO function**********//
+window.addTask = async function(){
 
-contentArea.innerHTML = `
+let title=document.getElementById("taskTitle").value;
+let priority=document.getElementById("priority").value;
+let due=document.getElementById("dueDate").value;
 
-<div class="card">
+let username=localStorage.getItem("username") || "guest";
 
-<h2>My Tasks</h2>
+let taskId=Date.now();
 
-<div style="margin-bottom:10px">
+await set(ref(db,"tasks/"+taskId),{
 
-<input id="taskTitle" placeholder="Task Title">
+title:title,
+priority:priority,
+dueDate:due,
+assignedTo:username,
+progress:"Pending",
+completed:false
 
-<select id="priority">
-<option>High</option>
-<option>Medium</option>
-<option>Low</option>
-</select>
-
-<input type="date" id="dueDate">
-
-<button onclick="addTask()">Add Task</button>
-
-</div>
-
-<table class="table table-bordered">
-
-<thead>
-
-<tr>
-<th>Task</th>
-<th>Priority</th>
-<th>Due Date</th>
-<th>Status</th>
-<th>Done</th>
-<th>Delete</th>
-</tr>
-
-</thead>
-
-<tbody id="taskTable"></tbody>
-
-</table>
-
-</div>
-
-`;
+});
 
 loadTasks();
 
 }
 
+window.loadTasks = async function(){
+
+let username=localStorage.getItem("username") || "guest";
+
+const snapshot=await get(ref(db,"tasks"));
+
+let table=document.getElementById("taskTable");
+
+table.innerHTML="";
+
+snapshot.forEach(child=>{
+
+let task=child.val();
+
+if(task.assignedTo===username){
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${task.title}</td>
+<td>${task.priority}</td>
+<td>${task.dueDate}</td>
+<td>${task.progress}</td>
+
+<td>
+<input type="checkbox"
+${task.completed?"checked":""}
+onclick="toggleTask('${child.key}')">
+</td>
+
+<td>
+<button onclick="deleteTask('${child.key}')">
+Delete
+</button>
+</td>
+
+</tr>
+
+`;
+
+}
+
+});
+
+}
+  
+window.toggleTask = async function(id){
+
+const snapshot=await get(ref(db,"tasks/"+id));
+
+let task=snapshot.val();
+
+await update(ref(db,"tasks/"+id),{
+
+completed:!task.completed,
+progress: task.completed ? "Pending" : "Completed"
+
+});
+
+loadTasks();
+
+}
+
+window.deleteTask = async function(id){
+
+await remove(ref(db,"tasks/"+id));
+
+loadTasks();
+
+}
+
+  
 /*function openTodoPage(){
 
 window.location.href="todo.html";
@@ -700,6 +789,7 @@ window.location.href="todo.html";
 </body>
 
 </html>
+
 
 
 
