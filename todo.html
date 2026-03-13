@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>User To-Do List</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:40px;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:left;
+}
+
+th{
+background:#f2f2f2;
+}
+
+button{
+padding:6px 10px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>My To-Do List</h2>
+
+<div>
+
+<input id="taskTitle" placeholder="Task Title">
+
+<select id="priority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+
+<input type="date" id="dueDate">
+
+<button onclick="addTask()">Add Task</button>
+
+</div>
+
+<br>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Task</th>
+<th>Priority</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Done</th>
+<th>Delete</th>
+</tr>
+
+</thead>
+
+<tbody id="taskTable"></tbody>
+
+</table>
+
+
+<script type="module">
+
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import { 
+getDatabase,
+ref,
+set,
+get,
+update,
+remove
+} 
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+import { firebaseConfig } from "./firebase-config.js";
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+
+/* Get Logged User */
+
+let username = localStorage.getItem("username");
+
+if(!username){
+
+alert("Please login first");
+
+window.location="login.html";
+
+}
+
+
+/* Add Task */
+
+window.addTask = async function(){
+
+try{
+
+let title=document.getElementById("taskTitle").value;
+let priority=document.getElementById("priority").value;
+let due=document.getElementById("dueDate").value;
+
+if(title===""){
+alert("Enter task");
+return;
+}
+
+let taskId=Date.now();
+
+await set(ref(db,"tasks/"+taskId),{
+
+title:title,
+priority:priority,
+dueDate:due,
+assignedTo:username,
+progress:"Pending",
+completed:false
+
+});
+
+document.getElementById("taskTitle").value="";
+
+loadTasks();
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+
+
+/* Load Tasks */
+
+window.loadTasks = async function(){
+
+try{
+
+const snapshot = await get(ref(db,"tasks"));
+
+let table=document.getElementById("taskTable");
+
+table.innerHTML="";
+
+snapshot.forEach(child=>{
+
+let task=child.val();
+
+if(task.assignedTo===username){
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${task.title}</td>
+<td>${task.priority}</td>
+<td>${task.dueDate}</td>
+<td>${task.progress}</td>
+
+<td>
+<input type="checkbox"
+${task.completed ? "checked" : ""}
+onclick="toggleTask('${child.key}')">
+</td>
+
+<td>
+<button onclick="deleteTask('${child.key}')">
+Delete
+</button>
+</td>
+
+</tr>
+
+`;
+
+}
+
+});
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+
+
+/* Toggle Completion */
+
+window.toggleTask = async function(id){
+
+try{
+
+const snapshot = await get(ref(db,"tasks/"+id));
+
+let task=snapshot.val();
+
+await update(ref(db,"tasks/"+id),{
+
+completed:!task.completed,
+progress: task.completed ? "Pending" : "Completed"
+
+});
+
+loadTasks();
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+
+
+/* Delete Task */
+
+window.deleteTask = async function(id){
+
+try{
+
+await remove(ref(db,"tasks/"+id));
+
+loadTasks();
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+
+
+/* Load Tasks When Page Opens */
+
+loadTasks();
+
+</script>
+
+</body>
+
+</html>
