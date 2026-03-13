@@ -746,7 +746,20 @@ loadTasks();
 // LOAD USERS INTO ASSIGN DROPDOWN
 async function loadUsersForAssign(){
 
-let users = await getUsers();
+let loggedUser=getLoggedUser();
+
+let select=document.getElementById("taskUser");
+
+if(loggedUser.role!=="Admin"){
+
+select.innerHTML=`<option>${loggedUser.username}</option>`;
+select.disabled=true;
+
+return;
+
+}
+
+let users=await getUsers();
 
 let options="";
 
@@ -754,7 +767,7 @@ users.forEach(u=>{
 options+=`<option value="${u.username}">${u.username}</option>`;
 });
 
-document.getElementById("taskUser").innerHTML=options;
+select.innerHTML=options;
 
 }
 
@@ -765,7 +778,16 @@ async function addTask(){
 let title=document.getElementById("taskTitle").value;
 let priority=document.getElementById("taskPriority").value;
 let due=document.getElementById("taskDate").value;
-let user=document.getElementById("taskUser").value;
+
+let loggedUser = getLoggedUser();
+
+let assignedUser;
+
+if(loggedUser.role==="Admin"){
+assignedUser=document.getElementById("taskUser").value;
+}else{
+assignedUser=loggedUser.username;
+}
 
 let id=Date.now();
 
@@ -776,7 +798,8 @@ title,
 priority,
 due,
 status:"Pending",
-user,
+createdBy:loggedUser.username,
+assignedTo:assignedUser,
 comments:[]
 
 });
@@ -814,7 +837,7 @@ ${t.status}
 
 </td>
 
-<td>${t.user}</td>
+<td>${t.assignedTo}</td>
 
 <td>
 <i class="fa fa-edit action"
@@ -841,6 +864,168 @@ document.getElementById("taskTable").innerHTML=rows;
 
 }
 
+async function toggleTask(id){
+
+let loggedUser=getLoggedUser();
+
+const snap=await get(ref(db,"tasks/"+id));
+
+let task=snap.val();
+
+if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
+Swal.fire("Permission Denied");
+return;
+}
+
+let newStatus = task.status==="Pending" ? "Completed":"Pending";
+
+await update(ref(db,"tasks/"+id),{status:newStatus});
+
+loadTasks();
+
+}
+
+async function editTask(id){
+
+let loggedUser=getLoggedUser();
+
+const snap=await get(ref(db,"tasks/"+id));
+
+let task=snap.val();
+
+if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
+Swal.fire("Only Admin or Creator can edit");
+return;
+}
+
+let newTitle=prompt("Edit Task",task.title);
+
+if(!newTitle) return;
+
+await update(ref(db,"tasks/"+id),{title:newTitle});
+
+loadTasks();
+
+}
+
+async function deleteTask(id){
+
+let loggedUser=getLoggedUser();
+
+const snap=await get(ref(db,"tasks/"+id));
+
+let task=snap.val();
+
+if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
+Swal.fire("Only Admin or Creator can delete");
+return;
+}
+
+await remove(ref(db,"tasks/"+id));
+
+loadTasks();
+
+}
+
+async function taskComments(id){
+
+let comment=prompt("Enter comment");
+
+if(!comment) return;
+
+const snap=await get(ref(db,"tasks/"+id+"/comments"));
+
+let comments=snap.exists()?snap.val():[];
+
+comments.push({
+
+user:getLoggedUser().username,
+text:comment,
+time:new Date().toLocaleString()
+
+});
+
+await set(ref(db,"tasks/"+id+"/comments"),comments);
+
+Swal.fire("Comment added");
+
+}
+async function filterTasks(status){
+
+const snapshot = await get(ref(db,"tasks"));
+
+let rows="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(status==="All" || t.status===status){
+
+rows+=`
+
+<tr>
+<td>${t.title}</td>
+<td>${t.priority}</td>
+<td>${t.due||"-"}</td>
+<td>${t.status}</td>
+<td>${t.assignedTo}</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+`;
+
+}
+
+});
+
+document.getElementById("taskTable").innerHTML=rows;
+
+}
+
+//Analytics dashboard
+  async function openTaskDashboard(){
+
+contentArea.innerHTML=`
+
+<h3>Task Analytics</h3>
+
+<canvas id="taskChart"></canvas>
+
+`;
+
+const snapshot=await get(ref(db,"tasks"));
+
+let pending=0;
+let completed=0;
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(t.status==="Pending") pending++;
+else completed++;
+
+});
+
+const ctx=document.getElementById('taskChart');
+
+new Chart(ctx,{
+type:'doughnut',
+data:{
+labels:['Pending','Completed'],
+datasets:[{
+data:[pending,completed],
+backgroundColor:['orange','green']
+}]
+}
+});
+
+}
+
+  
 async function openKanban(){
 
 contentArea.innerHTML = `
@@ -920,7 +1105,7 @@ await update(ref(db,"tasks/"+id),{status});
 
   // ----------- AUTO LOGIN if stored -----------
 
-/*window.onload = () => {
+window.onload = () => {
  let user = JSON.parse(localStorage.getItem("loginUser"));
   if (user && user.username) {
     document.getElementById("loginPage").style.display = "none";
@@ -929,13 +1114,14 @@ await update(ref(db,"tasks/"+id),{status});
     resetTimer();
     home();
   }
-};*/
+};
   
 </script>
 
 </body>
 
 </html>
+
 
 
 
