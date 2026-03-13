@@ -13,7 +13,11 @@
 <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -86,17 +90,15 @@ thead input{width:100%;font-size:12px}
   window.remove = remove;
 
 //************ To do functioning ********//
-window.openTodoPage = function(){
+window.openTodoPage=function(){
 
-document.getElementById("contentArea").innerHTML = `
-
-<div class="todo-container">
+document.getElementById("contentArea").innerHTML=`
 
 <h2>Task Manager</h2>
 
-<div class="task-input">
+<div style="margin-bottom:15px">
 
-<input id="taskTitle" placeholder="Task title">
+<input id="taskTitle" placeholder="Task Title">
 
 <select id="priority">
 <option value="High">High</option>
@@ -106,19 +108,13 @@ document.getElementById("contentArea").innerHTML = `
 
 <input type="date" id="dueDate">
 
+<select id="assignUser"></select>
+
 <button onclick="addTask()">Add Task</button>
 
 </div>
 
-<div class="task-filter">
-
-<button onclick="loadTasks('all')">All</button>
-<button onclick="loadTasks('pending')">Pending</button>
-<button onclick="loadTasks('completed')">Completed</button>
-
-</div>
-
-<table class="task-table">
+<table id="taskTable" class="display" style="width:100%">
 
 <thead>
 
@@ -126,6 +122,8 @@ document.getElementById("contentArea").innerHTML = `
 <th>Task</th>
 <th>Priority</th>
 <th>Due Date</th>
+<th>Assigned</th>
+<th>Progress</th>
 <th>Status</th>
 <th>Done</th>
 <th>Delete</th>
@@ -133,15 +131,14 @@ document.getElementById("contentArea").innerHTML = `
 
 </thead>
 
-<tbody id="taskTable"></tbody>
+<tbody></tbody>
 
 </table>
 
-</div>
-
 `;
 
-loadTasks("all");
+loadUsers();
+loadTasksRealtime();
 
 }
 </script>
@@ -166,8 +163,7 @@ loadTasks("all");
         <button onclick="createUserPage()" data-role="Admin,User"><i class="fa fa-user-plus"></i> Create User</button>
         <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
         <button onclick="openCalculatorPage()" data-role="Admin,User"><i class="fa-solid fa-calculator"></i> Calculator</button>
-        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List
-</button>
+        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> Task Manager</button>
     </div>
     <div class="user-area" onclick="changePassword()">
       <span id="displayUser"></span>
@@ -686,18 +682,15 @@ display.value = "";
 });
 
 //**********ToDO function**********//
-window.addTask = async function(){
+window.addTask=async function(){
 
 let title=document.getElementById("taskTitle").value;
+
 let priority=document.getElementById("priority").value;
+
 let due=document.getElementById("dueDate").value;
 
-let username=localStorage.getItem("username");
-
-if(!title){
-Swal.fire("Please enter task");
-return;
-}
+let assigned=document.getElementById("assignUser").value;
 
 let taskId=Date.now();
 
@@ -706,84 +699,89 @@ await set(ref(db,"tasks/"+taskId),{
 title:title,
 priority:priority,
 dueDate:due,
-assignedTo:username,
+assignedTo:assigned,
+progress:0,
 completed:false
 
 });
 
 Swal.fire({
 icon:"success",
-title:"Task Added Successfully",
-timer:1500,
-showConfirmButton:false
+title:"Task Added"
 });
 
-loadTasks("all");
+}
+async function loadUsers(){
+
+const snapshot=await get(ref(db,"users"));
+
+let dropdown=document.getElementById("assignUser");
+
+dropdown.innerHTML="";
+
+snapshot.forEach(child=>{
+
+let user=child.val();
+
+dropdown.innerHTML+=`<option value="${user.username}">
+${user.username}
+</option>`;
+
+});
 
 }
-
-window.loadTasks = async function(filter){
+function loadTasksRealtime(){
 
 let username=localStorage.getItem("username");
 
-const snapshot=await get(ref(db,"tasks"));
+let role=localStorage.getItem("role");
 
-let table=document.getElementById("taskTable");
+onValue(ref(db,"tasks"),(snapshot)=>{
 
-table.innerHTML="";
+let table=$("#taskTable").DataTable();
+
+table.clear();
 
 snapshot.forEach(child=>{
 
 let task=child.val();
 
-if(task.assignedTo===username){
+if(role!=="Admin" && task.assignedTo!==username) return;
 
-if(filter==="pending" && task.completed) return;
-if(filter==="completed" && !task.completed) return;
+let overdue="";
 
-let priorityClass="";
+if(!task.completed && new Date(task.dueDate)<new Date())
+overdue="style='color:red;font-weight:bold'";
 
-if(task.priority==="High") priorityClass="high";
-if(task.priority==="Medium") priorityClass="medium";
-if(task.priority==="Low") priorityClass="low";
+table.row.add([
 
-table.innerHTML+=`
+task.title,
 
-<tr>
+task.priority,
 
-<td>${task.title}</td>
+`<span ${overdue}>${task.dueDate}</span>`,
 
-<td class="${priorityClass}">
-${task.priority}
-</td>
+task.assignedTo,
 
-<td>${task.dueDate}</td>
+`<progress value="${task.progress}" max="100"></progress>`,
 
-<td>
-${task.completed ? "Completed" : "Pending"}
-</td>
+task.completed?"Completed":"Pending",
 
-<td>
-<input type="checkbox"
+`<input type="checkbox"
 ${task.completed?"checked":""}
-onclick="toggleTask('${child.key}')">
-</td>
+onclick="toggleTask('${child.key}')">`,
 
-<td>
-<button onclick="deleteTask('${child.key}')">🗑</button>
-</td>
+`<button onclick="deleteTask('${child.key}')">🗑</button>`
 
-</tr>
+]).draw(false);
 
-`;
-
-}
+});
 
 });
 
 }
   
-window.toggleTask = async function(id){
+window.toggleTask=async function(id){
 
 const snapshot=await get(ref(db,"tasks/"+id));
 
@@ -791,26 +789,24 @@ let task=snapshot.val();
 
 await update(ref(db,"tasks/"+id),{
 
-completed:!task.completed
+completed:!task.completed,
+progress: task.completed?0:100
 
 });
 
 Swal.fire({
 icon:"success",
 title:"Task Updated",
-timer:1200,
-showConfirmButton:false
+timer:1000
 });
-
-loadTasks("all");
 
 }
 
-window.deleteTask = async function(id){
+  
+window.deleteTask=function(id){
 
 Swal.fire({
-title:"Delete Task?",
-icon:"warning",
+title:"Delete task?",
 showCancelButton:true
 }).then(async(result)=>{
 
@@ -818,9 +814,7 @@ if(result.isConfirmed){
 
 await remove(ref(db,"tasks/"+id));
 
-Swal.fire("Deleted!","Task removed","success");
-
-loadTasks("all");
+Swal.fire("Deleted");
 
 }
 
@@ -852,6 +846,7 @@ window.location.href="todo.html";
 </body>
 
 </html>
+
 
 
 
