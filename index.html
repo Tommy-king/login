@@ -487,7 +487,8 @@ async function changeUserPassword(username) {
 
 // --------------------- EXCEL MODULE --------------------- //
 function formatDate(value){ let d=new Date(value); if(isNaN(d)) return value; return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear(); }
-function openExcelPage(){
+
+  function openExcelPage(){
     contentArea.innerHTML=`<div class="card"><div class="card-body">
         <h2>Excel Viewer</h2>
         <input type="file" id="excelFile" class="form-control mb-3">
@@ -526,10 +527,9 @@ function openExcelPage(){
         };
         reader.readAsArrayBuffer(file);
     });
-    document.getElementById('excelFile').click();
+    /*document.getElementById('excelFile').click();*/
 }
   // --------------------- CALCULATOR MODULE --------------------- //
-// --------------------- CALCULATOR MODULE --------------------- //
 function openCalculatorPage(){
 
 contentArea.innerHTML = `
@@ -626,7 +626,7 @@ display.value = "";
 });
 
   // ...........To do list ...................//
-/*function openTodoPage(){
+function openTodoPage(){
 
 contentArea.innerHTML = `
 
@@ -675,30 +675,32 @@ contentArea.innerHTML = `
 
 loadTasks();
 
-}*/
+}
 
-function openTodoPage(){
+/*function openTodoPage(){
 
 window.location.href="todo.html";
 
-}
+}*/
   // ----------- AUTO LOGIN if stored -----------
 
-//window.onload = () => {
-  //let user = JSON.parse(localStorage.getItem("loginUser"));
-  //if (user && user.username) {
-   // document.getElementById("loginPage").style.display = "none";
-    //document.getElementById("dashboard").style.display = "block";
-   // document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
-    //resetTimer();
-    //home();
- // }
-//};
+/*window.onload = () => {
+ let user = JSON.parse(localStorage.getItem("loginUser"));
+  if (user && user.username) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+   document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
+    resetTimer();
+    home();
+  }
+};*/
+  
 </script>
 
 </body>
 
 </html>
+
 
 
 
