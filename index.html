@@ -845,13 +845,7 @@ rows+=`
 
 <td>${formatDate(t.due)}</td>
 
-<td>
-<select onchange="updateStatus('${t.id}',this.value)" class="form-select form-select-sm">
-<option ${t.status==="Pending"?"selected":""}>Pending</option>
-<option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
-<option ${t.status==="Completed"?"selected":""}>Completed</option>
-</select>
-</td>
+<td style="${statusColor(t.status)}">${t.status}</td>
 
 <td>${t.completedDate || "-"}</td> 
 <td>${t.assignedTo}</td>
@@ -876,7 +870,7 @@ onclick="deleteTask('${t.id}')"></i>
 document.getElementById("taskTable").innerHTML = rows;
 
 /* destroy old table */
-setTimeout(() => {
+setTimeout(()=>{
 
 if ($.fn.DataTable.isDataTable('#todoTable')) {
 $('#todoTable').DataTable().destroy();
@@ -898,7 +892,7 @@ fixedHeader:true,
 
 scrollX:true,
 
-dom:'Bfrtip',
+dom:'Blfrtip',   // ← comma added here
 
 buttons:[
 'colvis',
@@ -918,7 +912,6 @@ extend:'print'
 });
 
 },200);
-
   
 /* COLUMN FILTER */
 
@@ -1259,46 +1252,7 @@ $(this).text().toLowerCase().indexOf(value)>-1
 
 }
 
-    //Todo DataTable Initialization
-function initTodoTable(){
 
-if ($.fn.DataTable.isDataTable('#todoTable')) {
-$('#todoTable').DataTable().destroy();
-}
-
-let table = $('#todoTable').DataTable({
-
-dom: 'Bfrtip',
-
-buttons: [
-'colvis',
-'excel',
-'csv',
-'print'
-],
-
-pageLength:10,
-
-orderCellsTop:true,
-
-fixedHeader:true,
-
-scrollX:true
-
-});
-
-/* column filters */
-
-$('#todoTable thead tr:eq(1) th input').on('keyup change', function(){
-
-let index=$(this).parent().index();
-
-table.column(index).search(this.value).draw();
-
-});
-
-}
-  
 //update to do status
 async function updateStatus(id,status){
 
