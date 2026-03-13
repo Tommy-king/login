@@ -417,9 +417,6 @@ contentArea.innerHTML = `<div class="card">
 
 <h2>User Management</h2>
 
-
-
-
 </div>
 </div>`;
 
@@ -651,16 +648,33 @@ contentArea.innerHTML = `
 
 <div class="row mb-3">
 
-<div class="col">
-<input id="taskTitle" class="form-control" placeholder="Task Title">
+<div class="col-md-3">
+<div class="card bg-danger text-white">
+<div class="card-body">
+<h5>Pending</h5>
+<h3 id="pendingCount">0</h3>
+</div>
+</div>
 </div>
 
-<div class="col">
-<select id="taskPriority" class="form-control">
-<option>High</option>
-<option>Medium</option>
-<option>Low</option>
-</select>
+<div class="col-md-3">
+<div class="card bg-warning text-dark">
+<div class="card-body">
+<h5>In Progress</h5>
+<h3 id="progressCount">0</h3>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card bg-success text-white">
+<div class="card-body">
+<h5>Completed</h5>
+<h3 id="doneCount">0</h3>
+</div>
+</div>
+</div>
+
 </div>
 
 <div class="col">
@@ -686,17 +700,12 @@ onkeyup="searchTasks()">
 </div>
 
 <div class="mb-3">
-
 <button class="btn btn-outline-secondary btn-sm" onclick="loadTasks()">All</button>
 <button class="btn btn-outline-warning btn-sm" onclick="filterTasks('Pending')">Pending</button>
+<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">Pending</button>
 <button class="btn btn-outline-success btn-sm" onclick="filterTasks('Completed')">Completed</button>
-
 <button class="btn btn-dark btn-sm" onclick="openKanban()">Kanban</button>
-
-<button class="btn btn-success btn-sm" onclick="exportTasks()">Export Excel</button>
-
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
-
 </div>
 
 <table id="todoTable" class="table table-bordered table-striped table-hover w-100">
@@ -705,13 +714,13 @@ onkeyup="searchTasks()">
 <tr>
 <th>Task</th>
 <th>Priority</th>
-<th>Due</th>
+<th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>User</th>
-<th>Edit</th>
+<th>Assigning to User</th>
+<th>Task Edit</th>
 <th>Comment</th>
-<th>Delete</th>
+<th>Task Delete</th>
 </tr>
 </thead>
 
@@ -887,11 +896,8 @@ $('#todoTable').DataTable().destroy();
 }
 
 /* initialize datatable */
-
 setTimeout(()=>{
-
 $('#todoTable').DataTable({
-
 pageLength:10,
 lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
 scrollY:"400px",
@@ -899,7 +905,6 @@ scrollCollapse:true,
 paging:true,
 fixedHeader:true,
 dom:'Blfrtip',
-
 buttons:[
 'colvis',
 {
@@ -1326,6 +1331,36 @@ if(status==="In-Progress") return "color:orange;font-weight:bold";
 if(status==="Completed") return "color:green;font-weight:bold";
 
 return "";
+
+}
+
+
+async function openNotifications(){
+
+const user=getLoggedUser().username;
+
+const snapshot=await get(ref(db,"tasks"));
+
+let list="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(t.user==user && t.status=="Pending"){
+
+list+=`<li>${t.title}</li>`;
+
+}
+
+});
+
+Swal.fire({
+
+title:"Your Tasks",
+html:`<ul>${list}</ul>`
+
+});
 
 }
   // ----------- AUTO LOGIN if stored -----------
