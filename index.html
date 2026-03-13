@@ -775,11 +775,18 @@ select.innerHTML=options;
 // CREATE TASK
 async function addTask(){
 
-let title=document.getElementById("taskTitle").value;
+let title=document.getElementById("taskTitle").value.trim();
+
+if(!title){
+Swal.fire("Validation","Task title required","warning");
+return;
+}
+
 let priority=document.getElementById("taskPriority").value;
+
 let due=document.getElementById("taskDate").value;
 
-let loggedUser = getLoggedUser();
+let loggedUser=getLoggedUser();
 
 let assignedUser;
 
@@ -804,7 +811,24 @@ comments:[]
 
 });
 
+Swal.fire("Success","Task created","success");
+
 loadTasks();
+
+}
+
+  //Date Format dd-mm-yyyy
+function formatDate(date){
+
+if(!date) return "-";
+
+let d=new Date(date);
+
+let day=("0"+d.getDate()).slice(-2);
+let month=("0"+(d.getMonth()+1)).slice(-2);
+let year=d.getFullYear();
+
+return `${day}-${month}-${year}`;
 
 }
 
@@ -830,11 +854,13 @@ rows+=`
 
 <td>${t.due||"-"}</td>
 
-<td onclick="toggleTask('${t.id}')"
-style="cursor:pointer">
-
+<td onclick="toggleTask('${t.id}')">
+<span style="color:${
+t.status==="Pending"?"red":
+t.status==="In Progress"?"orange":"green"
+};font-weight:bold">
 ${t.status}
-
+</span>
 </td>
 
 <td>${t.assignedTo}</td>
@@ -844,9 +870,8 @@ ${t.status}
 onclick="editTask('${t.id}')"></i>
 </td>
 
-<td>
-<i class="fa fa-comment action"
-onclick="taskComments('${t.id}')"></i>
+<td onclick="taskComments('${t.id}')" style="cursor:pointer">
+${t.comments && t.comments.length ? t.comments[t.comments.length-1].text : "-"}
 </td>
 
 <td>
@@ -868,13 +893,11 @@ async function toggleTask(id){
 
 let loggedUser=getLoggedUser();
 
-const snap=await get(ref(db,"tasks/"+id));
+snapshot.forEach(child=>{
 
-let task=snap.val();
+let t=child.val();
 
-if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
-Swal.fire("Permission Denied");
-return;
+if(loggedUser.role!=="Admin" && t.assignedTo!==loggedUser.username) return;
 }
 
 let newStatus = task.status==="Pending" ? "Completed":"Pending";
@@ -917,11 +940,16 @@ const snap=await get(ref(db,"tasks/"+id));
 let task=snap.val();
 
 if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
-Swal.fire("Only Admin or Creator can delete");
+
+Swal.fire("Access Denied","You can delete only your task","error");
+
 return;
+
 }
 
 await remove(ref(db,"tasks/"+id));
+
+Swal.fire("Deleted","Task removed","success");
 
 loadTasks();
 
@@ -986,19 +1014,24 @@ document.getElementById("taskTable").innerHTML=rows;
 }
 
 //Analytics dashboard
-  async function openTaskDashboard(){
+ async function openTaskDashboard(){
 
 contentArea.innerHTML=`
 
-<h3>Task Analytics</h3>
+<div style="width:400px;margin:auto">
+
+<h3 style="text-align:center">Task Analytics</h3>
 
 <canvas id="taskChart"></canvas>
+
+</div>
 
 `;
 
 const snapshot=await get(ref(db,"tasks"));
 
 let pending=0;
+let progress=0;
 let completed=0;
 
 snapshot.forEach(child=>{
@@ -1006,6 +1039,7 @@ snapshot.forEach(child=>{
 let t=child.val();
 
 if(t.status==="Pending") pending++;
+else if(t.status==="In Progress") progress++;
 else completed++;
 
 });
@@ -1015,17 +1049,16 @@ const ctx=document.getElementById('taskChart');
 new Chart(ctx,{
 type:'doughnut',
 data:{
-labels:['Pending','Completed'],
+labels:['Pending','In Progress','Completed'],
 datasets:[{
-data:[pending,completed],
-backgroundColor:['orange','green']
+data:[pending,progress,completed],
+backgroundColor:['red','orange','green']
 }]
 }
 });
 
 }
 
-  
 async function openKanban(){
 
 contentArea.innerHTML = `
@@ -1101,8 +1134,92 @@ await update(ref(db,"tasks/"+id),{status});
 });
 
 }
+// todo list export Excel Export
+async function exportTasks(){
 
+const snapshot=await get(ref(db,"tasks"));
 
+let data=[];
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+data.push({
+
+Task:t.title,
+Priority:t.priority,
+Due:formatDate(t.due),
+Status:t.status,
+User:t.assignedTo
+
+});
+
+});
+
+let ws=XLSX.utils.json_to_sheet(data);
+
+let wb=XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"Tasks");
+
+XLSX.writeFile(wb,"TaskReport.xlsx");
+
+}
+
+//Due Date Range Filter
+async function filterDate(){
+
+let from=document.getElementById("fromDate").value;
+let to=document.getElementById("toDate").value;
+
+const snapshot=await get(ref(db,"tasks"));
+
+let rows="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(!t.due) return;
+
+if(t.due>=from && t.due<=to){
+
+rows+=`<tr>
+<td>${t.title}</td>
+<td>${t.priority}</td>
+<td>${formatDate(t.due)}</td>
+<td>${t.status}</td>
+<td>${t.assignedTo}</td>
+</tr>`;
+
+}
+
+});
+
+document.getElementById("taskTable").innerHTML=rows;
+
+}
+
+  //Search Task 
+
+function searchTasks(){
+
+let value=document.getElementById("taskSearch").value.toLowerCase();
+
+$("#taskTable tr").filter(function(){
+
+$(this).toggle(
+
+$(this).text().toLowerCase().indexOf(value)>-1
+
+);
+
+});
+
+}
+  
+  
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
@@ -1121,6 +1238,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
