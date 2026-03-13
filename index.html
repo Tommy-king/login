@@ -14,7 +14,8 @@
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css" />
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -416,7 +417,9 @@ contentArea.innerHTML = `<div class="card">
 
 <h2>User Management</h2>
 
-<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
+
+
+<table id="todoTable" class="table table-striped table-bordered">
 
 <thead>
 
@@ -432,20 +435,18 @@ contentArea.innerHTML = `<div class="card">
 </tr>
 
 <tr>
-<th><input class="form-control form-control-sm" placeholder="Filter"></th>
-<th><input class="form-control form-control-sm" placeholder="Filter"></th>
-<th><input class="form-control form-control-sm" placeholder="Filter"></th>
-<th><input class="form-control form-control-sm" placeholder="Filter"></th>
-<th><input class="form-control form-control-sm" placeholder="Filter"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
 <th></th>
 <th></th>
 <th></th>
 </tr>
 
 </thead>
-
 <tbody id="taskTable"></tbody>
-
 </table>
 
 </div>
@@ -963,7 +964,9 @@ table.column(i).search(this.value).draw();
 });
 
 });
+document.getElementById("taskTable").innerHTML = rows;
 
+initTodoTable();
 }
 
   
@@ -1044,27 +1047,40 @@ loadTasks();
 
 async function taskComments(id){
 
-let comment=prompt("Enter comment");
+let comment = await Swal.fire({
+title:"Add Comment",
+input:"text",
+inputPlaceholder:"Enter comment...",
+showCancelButton:true
+});
 
-if(!comment) return;
+if(!comment.value) return;
 
-const snap=await get(ref(db,"tasks/"+id+"/comments"));
+const snap = await get(ref(db,"tasks/"+id+"/comments"));
 
-let comments=snap.exists()?snap.val():[];
+let comments = snap.exists() ? snap.val() : [];
 
 comments.push({
 
 user:getLoggedUser().username,
-text:comment,
+text:comment.value,
 time:new Date().toLocaleString()
 
 });
 
 await set(ref(db,"tasks/"+id+"/comments"),comments);
 
-Swal.fire("Comment added");
+Swal.fire({
+icon:"success",
+title:"Comment added"
+});
+
+/* refresh table */
+loadTasks();
 
 }
+
+  
 async function filterTasks(status){
 
 const snapshot = await get(ref(db,"tasks"));
@@ -1306,7 +1322,45 @@ $(this).text().toLowerCase().indexOf(value)>-1
 
 }
   
-  
+  //Todo DataTable Initialization
+function initTodoTable(){
+
+if ($.fn.DataTable.isDataTable('#todoTable')) {
+$('#todoTable').DataTable().destroy();
+}
+
+let table = $('#todoTable').DataTable({
+
+dom: 'Bfrtip',
+
+buttons: [
+'colvis',
+'excel',
+'csv',
+'print'
+],
+
+pageLength:10,
+
+orderCellsTop:true,
+
+fixedHeader:true,
+
+scrollX:true
+
+});
+
+/* column filters */
+
+$('#todoTable thead tr:eq(1) th input').on('keyup change', function(){
+
+let index=$(this).parent().index();
+
+table.column(index).search(this.value).draw();
+
+});
+
+}
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
@@ -1325,6 +1379,7 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
 
