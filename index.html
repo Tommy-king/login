@@ -849,10 +849,12 @@ rows+=`
 <td>${formatDate(t.due)}</td>
 
 <td>
-<select onchange="updateStatus('${t.id}',this.value)" class="form-select form-select-sm">
+<select onchange="updateStatus('${t.id}',this.value)" style="${statusColor(t.status)}">
+
 <option ${t.status==="Pending"?"selected":""}>Pending</option>
 <option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
 <option ${t.status==="Completed"?"selected":""}>Completed</option>
+
 </select>
 </td>
 
@@ -896,7 +898,7 @@ scrollY:"400px",
 scrollCollapse:true,
 paging:true,
 fixedHeader:true,
-dom:'Bfrtip',
+dom:'Blfrtip',
 
 buttons:[
 'colvis',
@@ -1289,45 +1291,6 @@ $(this).text().toLowerCase().indexOf(value)>-1
 
 }
   
-  //Todo DataTable Initialization
-function initTodoTable(){
-
-if ($.fn.DataTable.isDataTable('#todoTable')) {
-$('#todoTable').DataTable().destroy();
-}
-
-let table = $('#todoTable').DataTable({
-
-dom: 'Bfrtip',
-
-buttons: [
-'colvis',
-'excel',
-'csv',
-'print'
-],
-
-pageLength:10,
-
-orderCellsTop:true,
-
-fixedHeader:true,
-
-scrollX:true
-
-});
-
-/* column filters */
-
-$('#todoTable thead tr:eq(1) th input').on('keyup change', function(){
-
-let index=$(this).parent().index();
-
-table.column(index).search(this.value).draw();
-
-});
-
-}
 
 //update to do status
 async function updateStatus(id,status){
@@ -1361,6 +1324,8 @@ if(status==="Pending") return "color:red;font-weight:bold";
 if(status==="In-Progress") return "color:orange;font-weight:bold";
 
 if(status==="Completed") return "color:green;font-weight:bold";
+
+return "";
 
 }
   // ----------- AUTO LOGIN if stored -----------
