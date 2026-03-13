@@ -75,7 +75,7 @@ thead input{width:100%;font-size:12px}
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
   import { firebaseConfig } from "./firebase-config.js";
 
   const app = initializeApp(firebaseConfig);
@@ -94,30 +94,43 @@ window.openTodoPage=function(){
 
 document.getElementById("contentArea").innerHTML=`
 
-<h2>Task Manager</h2>
+<div class="card">
+<div class="card-body">
 
-<div style="margin-bottom:15px">
+<h3><i class="fa fa-list-check"></i> Task Manager</h3>
 
-<input id="taskTitle" placeholder="Task Title">
+<div class="row mb-3">
 
-<select id="priority">
+<div class="col-md-3">
+<input id="taskTitle" class="form-control" placeholder="Task Title">
+</div>
+
+<div class="col-md-2">
+<select id="priority" class="form-control">
 <option value="High">High</option>
 <option value="Medium">Medium</option>
 <option value="Low">Low</option>
 </select>
+</div>
 
-<input type="date" id="dueDate">
+<div class="col-md-2">
+<input type="date" id="dueDate" class="form-control">
+</div>
 
-<select id="assignUser"></select>
+<div class="col-md-2">
+<select id="assignUser" class="form-control"></select>
+</div>
 
-<button onclick="addTask()">Add Task</button>
+<div class="col-md-2">
+<button class="btn btn-primary w-100" onclick="addTask()">
+<i class="fa fa-plus"></i> Add Task
+</button>
+</div>
 
 </div>
 
-<table id="taskTable" class="display" style="width:100%">
-
+<table id="taskTable" class="display table table-striped" style="width:100%">
 <thead>
-
 <tr>
 <th>Task</th>
 <th>Priority</th>
@@ -128,17 +141,30 @@ document.getElementById("contentArea").innerHTML=`
 <th>Done</th>
 <th>Delete</th>
 </tr>
-
 </thead>
-
 <tbody></tbody>
-
 </table>
+
+</div>
+</div>
 
 `;
 
 loadUsers();
 loadTasksRealtime();
+
+setTimeout(()=>{
+
+$("#taskTable").DataTable({
+pageLength:10,
+scrollY:"400px",
+scrollCollapse:true,
+paging:true,
+fixedHeader:true,
+order:[[2,"asc"]]
+});
+
+},500);
 
 }
 </script>
@@ -684,33 +710,38 @@ display.value = "";
 //**********ToDO function**********//
 window.addTask=async function(){
 
-let title=document.getElementById("taskTitle").value;
-
+let title=document.getElementById("taskTitle").value.trim();
 let priority=document.getElementById("priority").value;
-
 let due=document.getElementById("dueDate").value;
-
 let assigned=document.getElementById("assignUser").value;
+
+if(!title || !due){
+Swal.fire("Error","Enter task and due date","error");
+return;
+}
 
 let taskId=Date.now();
 
 await set(ref(db,"tasks/"+taskId),{
-
-title:title,
-priority:priority,
+title,
+priority,
 dueDate:due,
 assignedTo:assigned,
 progress:0,
 completed:false
-
 });
 
 Swal.fire({
 icon:"success",
-title:"Task Added"
+title:"Task Added",
+timer:1200,
+showConfirmButton:false
 });
 
+document.getElementById("taskTitle").value="";
 }
+
+  
 async function loadUsers(){
 
 const snapshot=await get(ref(db,"users"));
@@ -730,16 +761,16 @@ ${user.username}
 });
 
 }
+  
 function loadTasksRealtime(){
 
-let username=localStorage.getItem("username");
-
-let role=localStorage.getItem("role");
+let user=JSON.parse(localStorage.getItem("loginUser"));
+let username=user.username;
+let role=user.role;
 
 onValue(ref(db,"tasks"),(snapshot)=>{
 
 let table=$("#taskTable").DataTable();
-
 table.clear();
 
 snapshot.forEach(child=>{
@@ -749,9 +780,17 @@ let task=child.val();
 if(role!=="Admin" && task.assignedTo!==username) return;
 
 let overdue="";
-
-if(!task.completed && new Date(task.dueDate)<new Date())
+if(!task.completed && new Date(task.dueDate)<new Date()){
 overdue="style='color:red;font-weight:bold'";
+}
+
+let progressBar=`
+<div class="progress">
+<div class="progress-bar bg-success" style="width:${task.progress}%">
+${task.progress}%
+</div>
+</div>
+`;
 
 table.row.add([
 
@@ -763,7 +802,7 @@ task.priority,
 
 task.assignedTo,
 
-`<progress value="${task.progress}" max="100"></progress>`,
+progressBar,
 
 task.completed?"Completed":"Pending",
 
@@ -771,7 +810,10 @@ task.completed?"Completed":"Pending",
 ${task.completed?"checked":""}
 onclick="toggleTask('${child.key}')">`,
 
-`<button onclick="deleteTask('${child.key}')">🗑</button>`
+`<button class="btn btn-sm btn-danger"
+onclick="deleteTask('${child.key}')">
+<i class="fa fa-trash"></i>
+</button>`
 
 ]).draw(false);
 
@@ -780,6 +822,7 @@ onclick="toggleTask('${child.key}')">`,
 });
 
 }
+  
   
 window.toggleTask=async function(id){
 
@@ -846,6 +889,7 @@ window.location.href="todo.html";
 </body>
 
 </html>
+
 
 
 
