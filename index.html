@@ -133,27 +133,33 @@ cursor:grab;
         <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List </button>
     </div>
     
-    <div class="user-area">
-    
-    <i class="fa fa-bell" style="cursor:pointer"></i>
-    
-    <span id="notifyCount"
-    style="
-    position:absolute;
-    top:-5px;
-    right:-10px;
-    background:red;
-    color:white;
-    border-radius:50%;
-    padding:3px 7px;
-    font-size:11px;
-    ">0</span>
-    
-    <span id="displayUser" onclick="changePassword()" style="cursor:pointer;font-weight:bold;"></span>
-    
-    <button onclick="event.stopPropagation(); logout()">Logout</button>
-    
-    </div>
+        <div class="user-area" style="position:relative; display:flex; align-items:center; gap:10px;">
+          
+          <div style="position:relative;">
+            <i class="fa fa-bell" style="cursor:pointer; font-size:18px;"></i>
+        
+            <span id="notifyCount"
+              style="
+              position:absolute;
+              top:-5px;
+              right:-10px;
+              background:red;
+              color:white;
+              border-radius:50%;
+              padding:3px 7px;
+              font-size:11px;">
+              0
+            </span>
+          </div>
+        
+          <span id="displayUser"
+                onclick="changePassword()"
+                style="cursor:pointer;font-weight:bold;">
+          </span>
+        
+          <button onclick="event.stopPropagation(); logout()">Logout</button>
+        
+        </div>
   </div>
 
   <div class="sidebar">
