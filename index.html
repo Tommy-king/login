@@ -85,28 +85,42 @@ thead input{width:100%;font-size:12px}
   window.update = update;
   window.remove = remove;
 
-
-  window.openTodoPage = function(){
+//************ To do functioning ********//
+window.openTodoPage = function(){
 
 document.getElementById("contentArea").innerHTML = `
 
-<h2>My Tasks</h2>
+<div class="todo-container">
 
-<input id="taskTitle" placeholder="Task Title">
+<h2>Task Manager</h2>
+
+<div class="task-input">
+
+<input id="taskTitle" placeholder="Task title">
 
 <select id="priority">
-<option>High</option>
-<option>Medium</option>
-<option>Low</option>
+<option value="High">High</option>
+<option value="Medium">Medium</option>
+<option value="Low">Low</option>
 </select>
 
 <input type="date" id="dueDate">
 
 <button onclick="addTask()">Add Task</button>
 
-<br><br>
+</div>
 
-<table border="1" width="100%">
+<div class="task-filter">
+
+<button onclick="loadTasks('all')">All</button>
+<button onclick="loadTasks('pending')">Pending</button>
+<button onclick="loadTasks('completed')">Completed</button>
+
+</div>
+
+<table class="task-table">
+
+<thead>
 
 <tr>
 <th>Task</th>
@@ -117,13 +131,17 @@ document.getElementById("contentArea").innerHTML = `
 <th>Delete</th>
 </tr>
 
+</thead>
+
 <tbody id="taskTable"></tbody>
 
 </table>
 
+</div>
+
 `;
 
-loadTasks();
+loadTasks("all");
 
 }
 </script>
@@ -674,7 +692,12 @@ let title=document.getElementById("taskTitle").value;
 let priority=document.getElementById("priority").value;
 let due=document.getElementById("dueDate").value;
 
-let username=localStorage.getItem("username") || "guest";
+let username=localStorage.getItem("username");
+
+if(!title){
+Swal.fire("Please enter task");
+return;
+}
 
 let taskId=Date.now();
 
@@ -684,18 +707,24 @@ title:title,
 priority:priority,
 dueDate:due,
 assignedTo:username,
-progress:"Pending",
 completed:false
 
 });
 
-loadTasks();
+Swal.fire({
+icon:"success",
+title:"Task Added Successfully",
+timer:1500,
+showConfirmButton:false
+});
+
+loadTasks("all");
 
 }
 
-window.loadTasks = async function(){
+window.loadTasks = async function(filter){
 
-let username=localStorage.getItem("username") || "guest";
+let username=localStorage.getItem("username");
 
 const snapshot=await get(ref(db,"tasks"));
 
@@ -709,14 +738,30 @@ let task=child.val();
 
 if(task.assignedTo===username){
 
+if(filter==="pending" && task.completed) return;
+if(filter==="completed" && !task.completed) return;
+
+let priorityClass="";
+
+if(task.priority==="High") priorityClass="high";
+if(task.priority==="Medium") priorityClass="medium";
+if(task.priority==="Low") priorityClass="low";
+
 table.innerHTML+=`
 
 <tr>
 
 <td>${task.title}</td>
-<td>${task.priority}</td>
+
+<td class="${priorityClass}">
+${task.priority}
+</td>
+
 <td>${task.dueDate}</td>
-<td>${task.progress}</td>
+
+<td>
+${task.completed ? "Completed" : "Pending"}
+</td>
 
 <td>
 <input type="checkbox"
@@ -725,9 +770,7 @@ onclick="toggleTask('${child.key}')">
 </td>
 
 <td>
-<button onclick="deleteTask('${child.key}')">
-Delete
-</button>
+<button onclick="deleteTask('${child.key}')">🗑</button>
 </td>
 
 </tr>
@@ -748,20 +791,40 @@ let task=snapshot.val();
 
 await update(ref(db,"tasks/"+id),{
 
-completed:!task.completed,
-progress: task.completed ? "Pending" : "Completed"
+completed:!task.completed
 
 });
 
-loadTasks();
+Swal.fire({
+icon:"success",
+title:"Task Updated",
+timer:1200,
+showConfirmButton:false
+});
+
+loadTasks("all");
 
 }
 
 window.deleteTask = async function(id){
 
+Swal.fire({
+title:"Delete Task?",
+icon:"warning",
+showCancelButton:true
+}).then(async(result)=>{
+
+if(result.isConfirmed){
+
 await remove(ref(db,"tasks/"+id));
 
-loadTasks();
+Swal.fire("Deleted!","Task removed","success");
+
+loadTasks("all");
+
+}
+
+});
 
 }
 
@@ -789,6 +852,7 @@ window.location.href="todo.html";
 </body>
 
 </html>
+
 
 
 
