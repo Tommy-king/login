@@ -777,7 +777,7 @@ onkeyup="searchTasks()">
 <div class="mb-3">
 <button class="btn btn-outline-secondary btn-sm" onclick="loadTasks()">All</button>
 <button class="btn btn-outline-warning btn-sm" onclick="filterTasks('Pending')">Pending</button>
-<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">Pending</button>
+<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">In-Process</button>
 <button class="btn btn-outline-success btn-sm" onclick="filterTasks('Completed')">Completed</button>
 <button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
@@ -1006,7 +1006,6 @@ extend:'print'
 });
 
 /* COLUMN FILTER */
-
 $('#todoTable thead tr:eq(1) th').each(function(i){
 
 $('input', this).on('keyup change', function(){
@@ -1020,7 +1019,10 @@ table.column(i).search(this.value).draw();
 });
 
 });
-  
+document.getElementById("taskTable").innerHTML = rows;
+
+}
+           
 
   
 async function toggleTask(id){
