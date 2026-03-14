@@ -791,7 +791,9 @@ onkeyup="searchTasks()">
 <th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>Assigning to User</th>
+<th>Assigned  to</th>
+<th>Assigned By</th>
+<th>No. of Days</th>
 <th>Task Edit</th>
 <th>Comment</th>
 <th>Task Delete</th>
@@ -842,49 +844,44 @@ select.innerHTML=options;
 
 
 // CREATE TASK
-async function addTask(){
+async function addTask() {
+  let title = document.getElementById("taskTitle").value.trim();
 
-let title=document.getElementById("taskTitle").value.trim();
+  if (!title) {
+    Swal.fire("Validation", "Task title required", "warning");
+    return;
+  }
 
-if(!title){
-Swal.fire("Validation","Task title required","warning");
-return;
+  let priority = document.getElementById("taskPriority").value;
+  let due = document.getElementById("taskDate").value;
+  let loggedUser = getLoggedUser();
+  let assignedUser;
+
+  if (loggedUser.role === "Admin") {
+    assignedUser = document.getElementById("taskUser").value;
+  } else {
+    assignedUser = loggedUser.username;
+  }
+
+  let id = Date.now();
+
+  await set(ref(db, "tasks/" + id), {
+    id,
+    title,
+    priority,
+    due,
+    status: "Pending",
+    createdBy: loggedUser.username,
+    assignedTo: assignedUser,
+    assignedBy: loggedUser.username,  // <-- Added this line
+    comments: []
+  });
+
+  Swal.fire("Success", "Task created", "success");
+
+  loadTasks();
 }
-
-let priority=document.getElementById("taskPriority").value;
-
-let due=document.getElementById("taskDate").value;
-
-let loggedUser=getLoggedUser();
-
-let assignedUser;
-
-if(loggedUser.role==="Admin"){
-assignedUser=document.getElementById("taskUser").value;
-}else{
-assignedUser=loggedUser.username;
-}
-
-let id=Date.now();
-
-await set(ref(db,"tasks/"+id),{
-
-id,
-title,
-priority,
-due,
-status:"Pending",
-createdBy:loggedUser.username,
-assignedTo:assignedUser,
-comments:[]
-
-});
-
-Swal.fire("Success","Task created","success");
-
-loadTasks();
-
-}
+  
 
   //Date Format dd-mm-yyyy
 function formatDate(date){
@@ -924,37 +921,28 @@ return;
 rows+=`
 
 <tr>
-
-<td>${t.title}</td>
-
-<td>${t.priority}</td>
-
-<td>${formatDate(t.due)}</td>
-
-<td>
-<select onchange="updateStatus('${t.id}',this.value)" style="${statusColor(t.status)}">
-
-<option ${t.status==="Pending"?"selected":""}>Pending</option>
-<option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
-<option ${t.status==="Completed"?"selected":""}>Completed</option>
-
-</select>
-</td>
-
-<td>${t.completedDate || "-"}</td> 
-<td>${t.assignedTo}</td>
-<td> <i class="fa fa-edit action" onclick="editTask('${t.id}')"></i> </td>
-
-<td>
-<i class="fa fa-comment action"onclick="taskComments('${t.id}')"></i>
-${t.comments && t.comments.length ? t.comments[t.comments.length-1].text : "-"}
-</td>
-
-<td>
-<i class="fa fa-trash action"
-onclick="deleteTask('${t.id}')"></i>
-</td>
-
+  <td>${t.title}</td>
+  <td>${t.priority}</td>
+  <td>${formatDate(t.due)}</td>
+  <td>
+    <select onchange="updateStatus('${t.id}', this.value)" style="${statusColor(t.status)}">
+      <option ${t.status === "Pending" ? "selected" : ""}>Pending</option>
+      <option ${t.status === "In-Progress" ? "selected" : ""}>In-Progress</option>
+      <option ${t.status === "Completed" ? "selected" : ""}>Completed</option>
+    </select>
+  </td>
+  <td>${t.completedDate || "-"}</td>
+  <td>${t.assignedTo}</td>
+  <td>${t.assignedBy || 'N/A'}</td>
+  <td>${calculateDays(t.due, t.completedDate)}</td>
+  <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
+  <td>
+    <i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>
+    ${t.comments && t.comments.length ? t.comments[t.comments.length - 1].text : "-"}
+  </td>
+  <td>
+    <i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>
+  </td>
 </tr>
 
 `;
@@ -1164,52 +1152,42 @@ document.getElementById("taskTable").innerHTML=rows;
 
 }
 
-//Analytics dashboard
- async function openTaskDashboard(){
+async function openTaskDashboard() {
+  contentArea.innerHTML = `
+    <div style="width:400px;margin:auto">
+      <h3 style="text-align:center">Task Analytics</h3>
+      <canvas id="taskChart"></canvas>
+    </div>
+  `;
 
-contentArea.innerHTML=`
+  const snapshot = await get(ref(db, "tasks"));
 
-<div style="width:400px;margin:auto">
+  let pending = 0;
+  let progress = 0;
+  let completed = 0;
 
-<h3 style="text-align:center">Task Analytics</h3>
+  snapshot.forEach(child => {
+    let t = child.val();
 
-<canvas id="taskChart"></canvas>
+    if (t.status === "Pending") pending++;
+    else if (t.status === "In-Progress") progress++;
+    else if (t.status === "Completed") completed++;
+  });
 
-</div>
+  const ctx = document.getElementById('taskChart');
 
-`;
-
-const snapshot=await get(ref(db,"tasks"));
-
-let pending=0;
-let progress=0;
-let completed=0;
-
-snapshot.forEach(child=>{
-
-let t=child.val();
-
-if(t.status==="Pending") pending++;
-else if(t.status==="In Progress") ;
-else completed++;
-
-});
-
-const ctx=document.getElementById('taskChart');
-
-new Chart(ctx,{
-type:'doughnut',
-data:{
-labels:['Pending','In Progress','Completed'],
-datasets:[{
-data:[pending,progress,completed],
-backgroundColor:['red','orange','green']
-}]
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Pending', 'In-Progress', 'Completed'],
+      datasets: [{
+        data: [pending, progress, completed],
+        backgroundColor: ['red', 'orange', 'green']
+      }]
+    }
+  });
 }
-});
-
-}
-
+  
 async function openKanban(){
 
 contentArea.innerHTML = `
@@ -1500,6 +1478,15 @@ status:"Viewed"
 });
 
 }
+
+  function calculateDays(dueDateStr, completedDateStr) {
+  if (!dueDateStr || !completedDateStr) return '';
+  const dueDate = new Date(dueDateStr);
+  const completedDate = new Date(completedDateStr);
+  const diffTime = dueDate - completedDate;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
   
   // ----------- AUTO LOGIN if stored -----------
 
@@ -1520,6 +1507,9 @@ window.onload = () => {
   }
 };
 
+
+  
+
   //Assigning role functions w.r.t the all buttons
 function applyRoleAccess(){
 
@@ -1536,7 +1526,7 @@ btn.style.display="none";
 });
 
 }
-  // ... all your existing JS code ...
+ 
 
   // Automatic Role Control (paste here at the very end)
   (function() {
