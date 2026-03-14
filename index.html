@@ -480,8 +480,29 @@ contentArea.innerHTML = `<div class="card">
 
 <h2>User Management</h2>
 
+<table id="userTable" class="table table-bordered table-striped w-100">
+
+<thead class="table-dark">
+<tr>
+<th>Username</th>
+<th>User ID</th>
+<th>Department</th>
+<th>Role</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+${rows}
+</tbody>
+
+</table>
+
 </div>
 </div>`;
+
+setTimeout(()=>{
 
 $("#userTable").DataTable({
 pageLength: 10,
@@ -492,6 +513,8 @@ scrollCollapse: true,
 paging: true,
 fixedHeader: true
 });
+
+},200);
 
 }
 
