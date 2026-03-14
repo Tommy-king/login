@@ -950,8 +950,8 @@ rows+=`
   </td>
   <td>${t.completedDate || "-"}</td>
   <td>${t.assignedTo}</td>
-  <td>${calculateDays(t.due, t.completedDate)}</td>  <!-- use t.due not task.dueDate -->
   <td>${t.assignedBy || 'N/A'}</td>
+  <td>${calculateDays(t.due, t.completedDate)}</td>
 
   <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
   <td>
@@ -1020,28 +1020,7 @@ table.column(i).search(this.value).draw();
 });
 
 });
-
-},200);
-
   
-/* COLUMN FILTER */
-
-$("#todoTable thead tr:eq(1) th input").each(function(i){
-
-$(this).on("keyup change",function(){
-
-if(table.column(i).search()!==this.value){
-
-table.column(i).search(this.value).draw();
-
-}
-
-});
-
-});
-document.getElementById("taskTable").innerHTML = rows;
-
-}
 
   
 async function toggleTask(id){
@@ -1516,20 +1495,21 @@ status:"Viewed"
 
 }
 
-function calculateDays(dueDate, completedDate) {
-  if (!dueDate || !completedDate) return "-";
+function calculateDays(dueDate, completedDate){
 
-  // Convert to Date objects
-  const due = new Date(dueDate);
-  const completed = new Date(completedDate);
+if(!dueDate || !completedDate) return "-";
 
-  // Difference in milliseconds
-  const diffMs = completed - due;
+/* convert due date */
+let due = new Date(dueDate);
 
-  // Convert to days
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+/* convert completed dd/mm/yyyy → yyyy-mm-dd */
+let parts = completedDate.split("/");
+let completed = new Date(parts[2]+"-"+parts[1]+"-"+parts[0]);
 
-  return diffDays;
+let diff = completed - due;
+
+return Math.round(diff/(1000*60*60*24));
+
 }
   
   // ----------- AUTO LOGIN if stored -----------
