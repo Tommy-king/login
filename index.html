@@ -773,7 +773,7 @@ onkeyup="searchTasks()">
 <button class="btn btn-outline-warning btn-sm" onclick="filterTasks('Pending')">Pending</button>
 <button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">Pending</button>
 <button class="btn btn-outline-success btn-sm" onclick="filterTasks('Completed')">Completed</button>
-<button class="btn btn-dark btn-sm" onclick="openKanban()">Kanban</button>
+<button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
 </div>
 
@@ -1185,7 +1185,7 @@ snapshot.forEach(child=>{
 let t=child.val();
 
 if(t.status==="Pending") pending++;
-else if(t.status==="In Progress") progress++;
+else if(t.status==="In Progress") ;
 else completed++;
 
 });
