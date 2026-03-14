@@ -65,6 +65,7 @@ body.dark table{background:#1a1d23;color:#212529}
 table td:first-child, table th:first-child{text-align:left;padding-left:12px;font-weight:500}
 table td:not(:first-child){text-align:left}
 body.dark table th{background:#6c757d}
+table th {white-space: normal !important;word-break: break-word;}
 table td{padding-top:10px;padding-bottom:10px}
 table tbody tr:hover{background:#f5f7fa}
 body.dark table tbody tr:hover{background:#2a2f37}
@@ -785,19 +786,35 @@ onkeyup="searchTasks()">
 <table id="todoTable" class="table table-bordered table-striped table-hover w-100">
 
 <thead class="table-dark">
+
 <tr>
 <th>Task</th>
 <th>Priority</th>
 <th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>Assigned  to</th>
+<th>Assigned To</th>
 <th>Assigned By</th>
 <th>No. of Days</th>
 <th>Task Edit</th>
 <th>Comment</th>
 <th>Task Delete</th>
 </tr>
+
+<tr>
+<th><input type="text" placeholder="Search Task"></th>
+<th><input type="text" placeholder="Priority"></th>
+<th><input type="text" placeholder="Due Date"></th>
+<th><input type="text" placeholder="Status"></th>
+<th><input type="text" placeholder="Completed"></th>
+<th><input type="text" placeholder="Assigned To"></th>
+<th><input type="text" placeholder="Assigned By"></th>
+<th><input type="text" placeholder="Days"></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+
 </thead>
 
 <tbody id="taskTable"></tbody>
@@ -933,8 +950,9 @@ rows+=`
   </td>
   <td>${t.completedDate || "-"}</td>
   <td>${t.assignedTo}</td>
+  <td>${calculateDays(t.due, t.completedDate)}</td>  <!-- use t.due not task.dueDate -->
   <td>${t.assignedBy || 'N/A'}</td>
-  <td>${calculateDays(t.due, t.completedDate)}</td>
+
   <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
   <td>
     <i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>
@@ -959,7 +977,9 @@ $('#todoTable').DataTable().destroy();
 
 /* initialize datatable */
 setTimeout(()=>{
-$('#todoTable').DataTable({
+
+let table = $('#todoTable').DataTable({
+
 pageLength:10,
 lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
 scrollY:"400px",
@@ -967,6 +987,7 @@ scrollCollapse:true,
 paging:true,
 fixedHeader:true,
 dom:'Blfrtip',
+
 buttons:[
 'colvis',
 {
@@ -981,6 +1002,22 @@ title:'Task_Report'
 extend:'print'
 }
 ]
+
+});
+
+/* COLUMN FILTER */
+
+$('#todoTable thead tr:eq(1) th').each(function(i){
+
+$('input', this).on('keyup change', function(){
+
+if(table.column(i).search() !== this.value){
+
+table.column(i).search(this.value).draw();
+
+}
+
+});
 
 });
 
@@ -1479,12 +1516,19 @@ status:"Viewed"
 
 }
 
-  function calculateDays(dueDateStr, completedDateStr) {
-  if (!dueDateStr || !completedDateStr) return '';
-  const dueDate = new Date(dueDateStr);
-  const completedDate = new Date(completedDateStr);
-  const diffTime = dueDate - completedDate;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+function calculateDays(dueDate, completedDate) {
+  if (!dueDate || !completedDate) return "-";
+
+  // Convert to Date objects
+  const due = new Date(dueDate);
+  const completed = new Date(completedDate);
+
+  // Difference in milliseconds
+  const diffMs = completed - due;
+
+  // Convert to days
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
   return diffDays;
 }
   
