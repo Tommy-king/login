@@ -1499,14 +1499,19 @@ status:"Viewed"
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
- let user = JSON.parse(localStorage.getItem("loginUser"));
+  let user = JSON.parse(sessionStorage.getItem("loginUser"));
+
   if (user && user.username) {
     document.getElementById("loginPage").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
-   document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
+    document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
+
     resetTimer();
     home();
     listenNotifications();
+  } else {
+    document.getElementById("loginPage").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
   }
 };
 
