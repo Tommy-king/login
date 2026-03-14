@@ -135,10 +135,14 @@ cursor:grab;
     
         <div class="user-area" style="position:relative; display:flex; align-items:center; gap:10px;">
           
-          <div style="position:relative;">
-            <i class="fa fa-bell" style="cursor:pointer; font-size:18px;"></i>
-        
-            <span id="notifyCount"
+            <div style="position:relative;">
+              
+              <i class="fa fa-bell"
+                 onclick="toggleNotifications()"
+                 style="cursor:pointer;font-size:18px;">
+              </i>
+              
+              <span id="notifyCount"
               style="
               position:absolute;
               top:-5px;
@@ -149,8 +153,39 @@ cursor:grab;
               padding:3px 7px;
               font-size:11px;">
               0
-            </span>
-          </div>
+              </span>
+              
+              <div id="notificationBox"
+              style="
+              display:none;
+              position:absolute;
+              right:0;
+              top:30px;
+              width:300px;
+              background:white;
+              color:black;
+              border-radius:6px;
+              box-shadow:0 4px 10px rgba(0,0,0,0.2);
+              z-index:999;
+              ">
+              
+              <div style="padding:10px;border-bottom:1px solid #eee;font-weight:bold">
+              Notifications
+              </div>
+              
+              <div id="notificationList"
+              style="max-height:300px;overflow:auto">
+              </div>
+              
+              <div style="padding:8px;text-align:center;border-top:1px solid #eee">
+              <button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
+              Clear All
+              </button>
+              </div>
+              
+              </div>
+              
+            </div>
         
           <span id="displayUser"
                 onclick="changePassword()"
@@ -289,7 +324,7 @@ async function login() {
 
     // Update UI access for buttons based on data-role
     updateUIAccess();
-
+    listenNotifications();
     // Load home page
     home();
 
@@ -1345,19 +1380,87 @@ const user = getLoggedUser().username;
 
 onValue(ref(db,"tasks"), snapshot => {
 
-let count = 0;
+let count=0;
+let html="";
 
-snapshot.forEach(child => {
+snapshot.forEach(child=>{
 
-let t = child.val();
+let t=child.val();
 
-if(t.assignedTo === user && t.status === "Pending"){
+if(t.assignedTo===user && t.status==="Pending"){
+
 count++;
+
+html+=`
+<div style="padding:10px;border-bottom:1px solid #eee">
+
+<b>To-Do</b><br>
+Task: ${t.title}
+
+<div style="margin-top:5px">
+
+<button class="btn btn-sm btn-primary"
+onclick="openTodoPage()">
+Open
+</button>
+
+<button class="btn btn-sm btn-danger"
+onclick="deleteNotification('${t.id}')">
+Clear
+</button>
+
+</div>
+
+</div>
+`;
+
 }
 
 });
 
-document.getElementById("notifyCount").innerText = count;
+document.getElementById("notifyCount").innerText=count;
+
+document.getElementById("notificationList").innerHTML =
+html || "<div style='padding:10px'>No Notifications</div>";
+
+});
+
+}
+
+  
+function toggleNotifications(){
+
+let box=document.getElementById("notificationBox");
+
+box.style.display = box.style.display==="block" ? "none" : "block";
+
+}
+
+async function deleteNotification(id){
+
+await update(ref(db,"tasks/"+id),{
+status:"Viewed"
+});
+
+}
+
+async function clearAllNotifications(){
+
+const user=getLoggedUser().username;
+
+const snapshot=await get(ref(db,"tasks"));
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(t.assignedTo===user && t.status==="Pending"){
+
+update(ref(db,"tasks/"+t.id),{
+status:"Viewed"
+});
+
+}
 
 });
 
