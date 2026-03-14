@@ -804,7 +804,7 @@ onkeyup="searchTasks()">
 
 loadUsersForAssign();
 loadTasks();
-
+  /* APPLY ROLE PERMISSION AGAIN */
 }
 
 // LOAD USERS INTO ASSIGN DROPDOWN
@@ -1531,6 +1531,25 @@ btn.style.display="none";
 });
 
 }
+  // ... all your existing JS code ...
+
+  // Automatic Role Control (paste here at the very end)
+  (function() {
+    const checkRoles = () => {
+      const role = getLoggedUser().role;
+      document.querySelectorAll("[data-role]").forEach(btn => {
+        const roles = btn.getAttribute("data-role").split(",").map(r => r.trim());
+        btn.style.display = roles.includes(role) ? "inline-block" : "none";
+      });
+    };
+
+    // Run once on page load
+    checkRoles();
+
+    // Watch for dynamically added buttons
+    const observer = new MutationObserver(checkRoles);
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
   
 </script>
 
