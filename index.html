@@ -776,7 +776,7 @@ onkeyup="searchTasks()">
 <div class="mb-3">
 <button class="btn btn-outline-secondary btn-sm" onclick="loadTasks()">All</button>
 <button class="btn btn-outline-warning btn-sm" onclick="filterTasks('Pending')">Pending</button>
-<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">Pending</button>
+<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">In-Progress</button>
 <button class="btn btn-outline-success btn-sm" onclick="filterTasks('Completed')">Completed</button>
 <button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
@@ -785,19 +785,35 @@ onkeyup="searchTasks()">
 <table id="todoTable" class="table table-bordered table-striped table-hover w-100">
 
 <thead class="table-dark">
+
 <tr>
 <th>Task</th>
 <th>Priority</th>
 <th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>Assigned  to</th>
+<th>Assigned to</th>
 <th>Assigned By</th>
 <th>No. of Days</th>
 <th>Task Edit</th>
 <th>Comment</th>
 <th>Task Delete</th>
 </tr>
+
+<tr>
+<th><input class="form-control form-control-sm" placeholder="Search Task"></th>
+<th><input class="form-control form-control-sm" placeholder="Priority"></th>
+<th><input class="form-control form-control-sm" placeholder="Due Date"></th>
+<th><input class="form-control form-control-sm" placeholder="Status"></th>
+<th><input class="form-control form-control-sm" placeholder="Completed"></th>
+<th><input class="form-control form-control-sm" placeholder="Assigned"></th>
+<th><input class="form-control form-control-sm" placeholder="Assigned By"></th>
+<th><input class="form-control form-control-sm" placeholder="Days"></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+
 </thead>
 
 <tbody id="taskTable"></tbody>
@@ -959,13 +975,15 @@ $('#todoTable').DataTable().destroy();
 
 /* initialize datatable */
 setTimeout(()=>{
-$('#todoTable').DataTable({
+
+let table = $('#todoTable').DataTable({
 pageLength:10,
 lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
 scrollY:"400px",
 scrollCollapse:true,
 paging:true,
 fixedHeader:true,
+orderCellsTop:true,
 dom:'Blfrtip',
 buttons:[
 'colvis',
@@ -981,30 +999,20 @@ title:'Task_Report'
 extend:'print'
 }
 ]
+});
+
+/* COLUMN FILTER */
+
+$("#todoTable thead tr:eq(1) th input").on("keyup change", function () {
+
+let colIndex = $(this).parent().index();
+
+table.column(colIndex).search(this.value).draw();
 
 });
 
 },200);
-
   
-/* COLUMN FILTER */
-
-$("#todoTable thead tr:eq(1) th input").each(function(i){
-
-$(this).on("keyup change",function(){
-
-if(table.column(i).search()!==this.value){
-
-table.column(i).search(this.value).draw();
-
-}
-
-});
-
-});
-document.getElementById("taskTable").innerHTML = rows;
-
-}
 
   
 async function toggleTask(id){
