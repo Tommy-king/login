@@ -1559,6 +1559,290 @@ return `<span style="color:blue">Completed On Time</span>`;
 
 }
 
+async function openTaskDashboard(){
+
+contentArea.innerHTML = `
+
+<div class="card">
+<div class="card-body">
+
+<h2>Task Analytics Dashboard</h2>
+
+<!-- KPI CARDS -->
+<div class="row text-center mb-4">
+
+<div class="col-md-3">
+<div class="card bg-primary text-white">
+<div class="card-body">
+<h4 id="kpiTotal">0</h4>
+Total Tasks
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card bg-warning text-white">
+<div class="card-body">
+<h4 id="kpiPending">0</h4>
+Pending
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card bg-success text-white">
+<div class="card-body">
+<h4 id="kpiCompleted">0</h4>
+Completed
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card bg-danger text-white">
+<div class="card-body">
+<h4 id="kpiOverdue">0</h4>
+Overdue
+</div>
+</div>
+</div>
+
+</div>
+
+
+<div class="row">
+
+<div class="col-md-6">
+<canvas id="trendChart"></canvas>
+</div>
+
+<div class="col-md-6">
+<canvas id="overdueChart"></canvas>
+</div>
+
+</div>
+
+<br>
+
+<div class="row">
+
+<div class="col-md-6">
+<canvas id="statusChart"></canvas>
+</div>
+
+<div class="col-md-6">
+<canvas id="deptChart"></canvas>
+</div>
+
+</div>
+
+</div>
+</div>
+`;
+
+const taskSnap = await get(ref(db,"tasks"));
+const userSnap = await get(ref(db,"users"));
+
+let tasks = [];
+taskSnap.forEach(child => tasks.push(child.val()));
+
+let users = {};
+userSnap.forEach(child=>{
+let u = child.val();
+users[u.username] = u.department;
+});
+
+
+/* ---------------- KPI CALCULATION ---------------- */
+
+let total = tasks.length;
+let pending = 0;
+let completed = 0;
+let overdue = 0;
+
+tasks.forEach(t=>{
+
+if(t.status === "Pending" || t.status === "In-Progress")
+pending++;
+
+if(t.status === "Completed")
+completed++;
+
+if(t.due && t.status !== "Completed"){
+
+let due = new Date(t.due);
+let today = new Date();
+
+if(today > due)
+overdue++;
+
+}
+
+});
+
+document.getElementById("kpiTotal").innerText = total;
+document.getElementById("kpiPending").innerText = pending;
+document.getElementById("kpiCompleted").innerText = completed;
+document.getElementById("kpiOverdue").innerText = overdue;
+
+
+/* ---------------- TREND CHART ---------------- */
+
+let trend = {};
+
+tasks.forEach(t=>{
+
+if(t.completedDate){
+
+let d = t.completedDate;
+
+if(!trend[d]) trend[d] = 0;
+
+trend[d]++;
+
+}
+
+});
+
+new Chart(document.getElementById("trendChart"),{
+
+type:'line',
+
+data:{
+labels:Object.keys(trend),
+datasets:[{
+label:"Tasks Completed",
+data:Object.values(trend),
+borderColor:"#2563eb",
+backgroundColor:"rgba(37,99,235,0.2)",
+fill:true
+}]
+},
+
+options:{
+plugins:{
+title:{display:true,text:"Task Completion Trend"}
+}
+}
+
+});
+
+
+/* ---------------- OVERDUE CHART ---------------- */
+
+let overdueUsers = {};
+
+tasks.forEach(t=>{
+
+if(!t.due || t.status === "Completed") return;
+
+let due = new Date(t.due);
+let today = new Date();
+
+if(today > due){
+
+if(!overdueUsers[t.assignedTo])
+overdueUsers[t.assignedTo] = 0;
+
+overdueUsers[t.assignedTo]++;
+
+}
+
+});
+
+new Chart(document.getElementById("overdueChart"),{
+
+type:'bar',
+
+data:{
+labels:Object.keys(overdueUsers),
+datasets:[{
+label:"Overdue Tasks",
+data:Object.values(overdueUsers),
+backgroundColor:"#ef4444"
+}]
+},
+
+options:{
+plugins:{
+title:{display:true,text:"Overdue Tasks by User"}
+}
+}
+
+});
+
+
+/* ---------------- STATUS CHART ---------------- */
+
+let status = {Pending:0,"In-Progress":0,Completed:0};
+
+tasks.forEach(t=>{
+
+if(status[t.status] !== undefined)
+status[t.status]++;
+
+});
+
+new Chart(document.getElementById("statusChart"),{
+
+type:'pie',
+
+data:{
+labels:Object.keys(status),
+datasets:[{
+data:Object.values(status),
+backgroundColor:["#ef4444","#f59e0b","#10b981"]
+}]
+},
+
+options:{
+plugins:{
+title:{display:true,text:"Tasks by Status"}
+}
+}
+
+});
+
+
+/* ---------------- DEPARTMENT CHART ---------------- */
+
+let dept = {};
+
+tasks.forEach(t=>{
+
+let d = users[t.assignedTo] || "Unknown";
+
+if(!dept[d]) dept[d] = 0;
+
+dept[d]++;
+
+});
+
+new Chart(document.getElementById("deptChart"),{
+
+type:'bar',
+
+data:{
+labels:Object.keys(dept),
+datasets:[{
+label:"Tasks",
+data:Object.values(dept),
+backgroundColor:"#6366f1"
+}]
+},
+
+options:{
+plugins:{
+title:{display:true,text:"Department Wise Tasks"}
+}
+}
+
+});
+
+}
+
+  
+
   $(window).on('resize', function () {
 $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
 });
