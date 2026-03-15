@@ -1572,7 +1572,7 @@ contentArea.innerHTML = `
 <div class="row text-center mb-4">
 
 <div class="col-md-3">
-<div class="card bg-primary text-white">
+<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTodoPage()">
 <div class="card-body">
 <h4 id="kpiTotal">0</h4>
 Total Tasks
@@ -1581,7 +1581,7 @@ Total Tasks
 </div>
 
 <div class="col-md-3">
-<div class="card bg-warning text-white">
+<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('pending')">
 <div class="card-body">
 <h4 id="kpiPending">0</h4>
 Pending
@@ -1590,7 +1590,7 @@ Pending
 </div>
 
 <div class="col-md-3">
-<div class="card bg-success text-white">
+<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('completed')">
 <div class="card-body">
 <h4 id="kpiCompleted">0</h4>
 Completed
@@ -1599,7 +1599,7 @@ Completed
 </div>
 
 <div class="col-md-3">
-<div class="card bg-danger text-white">
+<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('overdue')">
 <div class="card-body">
 <h4 id="kpiOverdue">0</h4>
 Overdue
@@ -1727,8 +1727,25 @@ fill:true
 },
 
 options:{
+onClick:(evt,elements)=>{
+
+if(elements.length>0){
+
+let index = elements[0].index;
+
+let label = Object.keys(status)[index];
+
+if(label==="Pending" || label==="In-Progress")
+openTaskTable("pending");
+
+if(label==="Completed")
+openTaskTable("completed");
+
+}
+
+},
 plugins:{
-title:{display:true,text:"Task Completion Trend"}
+title:{display:true,text:"Tasks by Status"}
 }
 }
 
@@ -1848,6 +1865,101 @@ title:{display:true,text:"Department Wise Tasks"}
 
 }
 
+//Function To Show Task Table
+
+  async function openTaskTable(filterType){
+
+const snapshot = await get(ref(db,"tasks"));
+
+let rows="";
+
+snapshot.forEach(child=>{
+
+let t = child.val();
+
+let show=false;
+
+let today=new Date();
+
+if(filterType==="pending"){
+if(t.status==="Pending" || t.status==="In-Progress") show=true;
+}
+
+if(filterType==="completed"){
+if(t.status==="Completed") show=true;
+}
+
+if(filterType==="overdue"){
+
+if(t.due && t.status!=="Completed"){
+
+let due=new Date(t.due);
+
+if(today>due) show=true;
+
+}
+
+}
+
+if(show){
+
+rows+=`
+<tr>
+<td>${t.title}</td>
+<td>${t.priority}</td>
+<td>${formatDate(t.due)}</td>
+<td>${t.status}</td>
+<td>${t.assignedTo}</td>
+<td>${t.assignedBy || "-"}</td>
+</tr>
+`;
+
+}
+
+});
+
+contentArea.innerHTML=`
+
+<div class="card">
+
+<div class="card-body">
+
+<h3 style="margin-bottom:15px;text-transform:capitalize">${filterType} Tasks</h3>
+
+<table class="table table-bordered table-striped">
+
+<thead class="table-dark">
+
+<tr>
+
+<th>Task</th>
+<th>Priority</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Assigned To</th>
+<th>Assigned By</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${rows || "<tr><td colspan='6'>No Tasks Found</td></tr>"}
+
+</tbody>
+
+</table>
+
+<button class="btn btn-secondary mt-3" onclick="openTaskDashboard()">Back</button>
+
+</div>
+
+</div>
+
+`;
+
+}
   
 
   $(window).on('resize', function () {
