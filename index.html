@@ -1,112 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin System</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Application</title>
 
 <!-- FONT AWESOME -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- BOOTSTRAP -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- BOOTSTRAP & DATATABLES -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css" />
 
-<!-- DATATABLE -->
-<link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css">
-
-<!-- CUSTOM CSS -->
-<link rel="stylesheet" href="css/style.css">
-</head>
-
-<body>
-
-<!-- LOGIN PAGE -->
-<div id="loginPage">
-    <h2>User Login</h2>
-    <input id="loginUser" placeholder="Username">
-    <input id="loginPass" type="password" placeholder="Password">
-    <br><br>
-    <button onclick="login()">Login</button>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="logo">
-            <i class="fa fa-chart-line"></i> Admin System
-        </div>
-
-        <div class="ribbon">
-            <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">
-                Notepad
-            </button>
-            <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">
-                ChatGPT
-            </button>
-            <button onclick="createUserPage()" data-role="Admin">
-                <i class="fa fa-user-plus"></i> Create User
-            </button>
-            <button onclick="openExcelPage()" data-role="Admin,User">
-                <i class="fa fa-file-excel"></i> Open Excel
-            </button>
-            <button onclick="openTodoPage()" data-role="Admin,User">
-                <i class="fa fa-list-check"></i> To-Do List
-            </button>
-        </div>
-    </div>
-
-    <!-- USER AREA -->
-    <div class="user-area">
-        <div style="position:relative">
-            <i class="fa fa-bell" onclick="toggleNotifications()" style="cursor:pointer;font-size:18px"></i>
-            <span id="notifyCount"
-                style="position:absolute;top:-5px;right:-10px;background:red;color:white;border-radius:50%;padding:3px 7px;font-size:11px;">0</span>
-
-            <div id="notificationBox">
-                <div class="notification-header">
-                    Notifications
-                    <span onclick="closeNotifications()">X</span>
-                </div>
-                <div id="notificationList"></div>
-                <div class="notification-footer">
-                    <button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
-                        Clear All
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <span id="displayUser" onclick="changePassword()" style="cursor:pointer;font-weight:bold;"></span>
-        <button onclick="logout()">Logout</button>
-    </div>
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <button onclick="home()">
-            <i class="fa fa-home"></i> Dashboard
-        </button>
-        <button onclick="createUserPage()" data-role="Admin">
-            <i class="fa fa-user-plus"></i> Create User
-        </button>
-        <button onclick="viewUsers()" data-role="Admin">
-            <i class="fa fa-users"></i> User Management
-        </button>
-        <button onclick="openExcelPage()" data-role="Admin">
-            <i class="fa fa-file-excel"></i> Excel Viewer
-        </button>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="content" id="contentArea"></div>
-</div>
-
-<!-- JS LIBRARIES -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -117,11 +26,1590 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Kanban Drag Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<!-- Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- MAIN APP MODULE (ES6 MODULE) -->
-<script type="module" src="js/app.js"></script>
+<style>
+/* your existing CSS here (unchanged) */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
+#loginPage{width:400px;margin:120px auto;background:#fff;padding:35px;border-radius:8px;box-shadow:0 5px 20px rgba(0,0,0,.15);text-align:center}
+#loginPage input{width:90%;padding:10px;margin:10px 0;border-radius:5px;border:1px solid #ccc}
+#loginPage button{width:50%;padding:10px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:bold}
+#dashboard{display:none}
+.topbar{position: fixed;top: 0;left: 0;width: 100%;height: 60px;background: #58797d;color: #fff;display: flex;align-items: center;justify-content: space-between;padding: 0 20px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);z-index: 1030;}
+.content {margin-top: 70px; margin-left: 230px;padding: 15px;}
+.logo{font-size:20px;font-weight:bold;display:flex;align-items:center;gap:10px}
+.ribbon{display:flex;align-items:center;gap:10px}
+.ribbon button{padding:6px 12px;background:#58797d;border:none;border-radius:4px;color:#fff;cursor:pointer;font-weight:bold}
+.user-area{display:flex;align-items:center;gap:15px;cursor:pointer}
+.user-area span:hover{text-decoration:underline}
+.sidebar{position:fixed;top:60px;left:0;width:220px;height:calc(100% - 60px);background:#58797d;color:#fff;padding-top:20px}
+.sidebar button{width:90%;margin:8px 10px;padding:12px;background:none;border:none;color:#fff;text-align:left;cursor:pointer;border-radius:4px}
+.sidebar button:hover{background:#374151}
+/*.content{margin-left:210px;margin-top:40px;padding:25px}*/
+.card{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
+th{background:#f1f5f9;font-weight:600}
+.action{cursor:pointer;margin-right:10px}
+.action i.fa-key{color:orange}
+.action i:hover{transform:scale(1.2)}
+.hidden{display:none}
+input,select{margin:5px 0;padding:8px;width:80%}
+button.create-btn{padding:8px 16px;margin-top:10px}
+body.dark{background:#0659;color:#212529}
+body.dark table{background:#1a1d23;color:#212529}
+table td:first-child, table th:first-child{text-align:left;padding-left:12px;font-weight:500}
+table td:not(:first-child){text-align:left}
+body.dark table th{background:#6c757d}
+table td{padding-top:10px;padding-bottom:10px}
+table tbody tr:hover{background:#f5f7fa}
+body.dark table tbody tr:hover{background:#2a2f37}
+thead input{width:100%;font-size:12px}
+.no-select{user-select:none}
+ table.dataTable {width:100% !important;}
+.dataTables_scrollHeadInner {width:100% !important;}
+  
+table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
+table.dataTable{table-layout:fixed;}
+
+/*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
+#userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
+
+  Table{width:100% !important;table-layout:fixed;}
+  Table th, Table td{white-space:nowrap;}
+
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
+  /* KANBAN BOARD */
+
+.kanban-column{
+min-height:400px;
+background:#f1f5f9;
+padding:10px;
+border-radius:6px;
+}
+
+.kanban-card{
+background:white;
+padding:10px;
+margin-bottom:10px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+cursor:grab;
+}
+  
+</style>
+</head>
+<body>
+
+<!-- Firebase setup script - MUST be before your main JS script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { firebaseConfig } from "./firebase-config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.db = db;
+  window.ref = ref;
+  window.set = set;
+  window.get = get;
+  window.child = child;
+  window.update = update;
+  window.remove = remove;
+  window.onValue = onValue;
+</script>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <h2>User Login</h2>
+  <input id="loginUser" placeholder="Username" />
+  <input id="loginPass" type="password" placeholder="Password" />
+  <br /><br />
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="logo"><i class="fa fa-chart-line"></i> Admin System</div>
+    <div class="ribbon">
+<!-- Top Ribbon -->
+        <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
+        <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
+        <button onclick="createUserPage()" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+        <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
+        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List </button>
+    </div>
+    
+        <div class="user-area" style="position:relative; display:flex; align-items:center; gap:10px;">
+          
+            <div style="position:relative;">
+              
+                 <i class="fa fa-bell"
+                 onclick="toggleNotifications()"
+                 style="cursor:pointer;font-size:18px;">
+              </i>
+              
+              <span id="notifyCount"
+              style="
+              position:absolute;
+              top:-5px;
+              right:-10px;
+              background:red;
+              color:white;
+              border-radius:50%;
+              padding:3px 7px;
+              font-size:11px;">
+              0
+              </span>
+              
+              <div id="notificationBox"
+              style="
+              display:none;
+              position:absolute;
+              right:0;
+              top:30px;
+              width:300px;
+              background:white;
+              color:black;
+              border-radius:6px;
+              box-shadow:0 4px 10px rgba(0,0,0,0.2);
+              z-index:999;
+              ">
+              
+            <div style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; position:relative;">
+              Notifications
+              <span style="position:absolute; top:5px; right:10px; cursor:pointer; font-weight:bold;"
+                    onclick="document.getElementById('notificationBox').style.display='none';">
+                X
+              </span>
+            </div>
+              
+              <div id="notificationList"
+              style="max-height:300px;overflow:auto">
+              </div>
+              
+              <div style="padding:8px;text-align:center;border-top:1px solid #eee">
+              <button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
+              Clear All
+              </button>
+              </div>
+              
+              </div>
+              
+            </div>
+        
+          <span id="displayUser"
+                onclick="changePassword()"
+                style="cursor:pointer;font-weight:bold;">
+          </span>
+        
+          <button onclick="event.stopPropagation(); logout()">Logout</button>
+        
+        </div>
+  </div>
+
+
+  <div class="sidebar">
+    <button onclick="home()"><i class="fa fa-home"></i> Dashboard</button>
+    <button onclick="createUserPage()" id="menuCreate" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+    <button onclick="viewUsers()" id="menuUsers" data-role="Admin"><i class="fa fa-users"></i> User Management</button>
+    <button onclick="openExcelPage()" data-role="Admin"> <i class="fa fa-file-excel"></i> Excel Viewer</button>
+  </div>
+
+  <!-- Dynamic content container -->
+  <div class="content" id="contentArea"></div>
+</div>
+
+<script>
+const AUTO_LOGOUT_MINUTES = 15;
+const PASSWORD_EXPIRY_DAYS = 30;
+let timer;
+const contentArea = document.getElementById("contentArea");
+
+let taskTable; 
+
+  
+function getLoggedUser(){
+  return JSON.parse(localStorage.getItem("loginUser") || "{}");
+}
+
+function isAdmin(){
+  let user = getLoggedUser();
+  return user.role === "Admin";
+}
+
+// Auto logout timer reset
+document.addEventListener("mousemove", resetTimer);
+document.addEventListener("keypress", resetTimer);
+function resetTimer(){
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    Swal.fire("Session Timeout", "Auto logout", "info");
+    logout();
+  }, AUTO_LOGOUT_MINUTES * 60000);
+}
+
+// ----------- FIREBASE USER FUNCTIONS ------------
+
+// Get users from Firebase Realtime Database
+async function getUsers() {
+  try {
+    const dbRef = ref(db);
+    const snapshot = await get(child(dbRef, "users"));
+    if (snapshot.exists()) {
+      return Object.values(snapshot.val());
+    }
+    return [];
+  } catch (error) {
+    console.error("Error getting users:", error);
+    return [];
+  }
+}
+
+// Save users array to Firebase Realtime Database
+async function saveUsers(users) {
+  try {
+    let usersObj = {};
+    users.forEach(u => {
+      usersObj[u.username] = u;
+    });
+    await set(ref(db, "users"), usersObj);
+  } catch (error) {
+    console.error("Error saving users:", error);
+  }
+}
+
+function updateUIAccess() {
+  let loggedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
+  let role = loggedUser.role || "";
+
+  // Select all buttons in sidebar and ribbon that have data-role
+  let buttons = document.querySelectorAll("[data-role]");
+
+  buttons.forEach(btn => {
+    let roles = btn.getAttribute("data-role").split(",").map(r => r.trim());
+    if (roles.includes(role)) {
+      btn.style.display = "inline-block"; // show
+    } else {
+      btn.style.display = "none"; // hide
+    }
+  });
+}
+// ----------- LOGIN / LOGOUT ------------
+
+async function login() {
+ if(!window.db){
+Swal.fire("Error","Firebase not initialized yet. Please refresh.","error");
+return;
+}
+
+let username = document.getElementById("loginUser").value.trim();
+let password = document.getElementById("loginPass").value.trim();
+
+  try {
+    const snapshot = await get(ref(db, "users"));
+
+    if (!snapshot.exists()) {
+      Swal.fire("Error", "No users found in database", "error");
+      return;
+    }
+
+    let users = snapshot.val();
+    let foundUser = null;
+
+    // Find the user
+    Object.values(users).forEach(user => {
+      if (user.username === username && user.password === password) {
+        foundUser = user;
+      }
+    });
+
+    if (!foundUser) {
+      Swal.fire("Login Failed", "Invalid username or password", "error");
+      return;
+    }
+
+    if (foundUser.status !== "Active") {
+      Swal.fire("Access Denied", "User inactive", "error");
+      return;
+    }
+
+    // Save logged-in user
+    localStorage.setItem("loginUser", JSON.stringify(foundUser));
+
+    // Show dashboard and hide login
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("displayUser").innerHTML = `${foundUser.username} (${foundUser.role})`;
+
+    // Update UI access for buttons based on data-role
+    updateUIAccess();
+    listenNotifications();
+    // Load home page
+    home();
+
+  } catch (error) {
+    console.error(error);
+    Swal.fire("Error", error.message, "error");
+    console.error(error);
+  }
+}
+function logout() {
+  localStorage.removeItem("loginUser");
+  document.getElementById("loginPage").style.display = "block";
+  document.getElementById("dashboard").style.display = "none";
+}
+
+// ----------- DASHBOARD ------------
+
+function home() {
+  contentArea.innerHTML = `<div class="card mb-3"><div class="card-body"><h2>Dashboard</h2><p>Welcome to the Admin Dashboard</p></div></div>`;
+}
+
+// ----------- WEB LINKS ------------
+
+function openWebInteraction(url) {
+  window.open(url, "_blank");
+}
+
+// ----------- PASSWORD CHANGE ------------
+
+async function changePassword() {
+  let loggedUser = JSON.parse(localStorage.getItem("loginUser") || "{}");
+  if (!loggedUser.username) return;
+
+  const { value: newPassword } = await Swal.fire({
+    title: "Change Password",
+    input: "password",
+    inputLabel: "New Password",
+    inputPlaceholder: "Enter new password",
+    showCancelButton: true
+  });
+
+  if (newPassword) {
+    let users = await getUsers();
+    let user = users.find(u => u.username === loggedUser.username);
+    if (user) {
+      user.password = newPassword;
+      user.pwdDate = new Date().toISOString();
+      await saveUsers(users);
+      localStorage.setItem("loginUser", JSON.stringify(user));
+      Swal.fire("Success", "Password changed successfully", "success");
+    }
+  }
+}
+
+// ----------- USER MANAGEMENT ------------
+
+function createUserPage() {
+
+if(!isAdmin()){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
+
+contentArea.innerHTML = `<div class="card mb-3"><div class="card-body">
+<h2>Create User</h2>
+
+<input id="newUsername" placeholder="Username"><br>
+<input id="newUserID" placeholder="User ID"><br>
+<input id="newDepartment" placeholder="Department"><br>
+<input id="newPassword" type="password" placeholder="Password"><br>
+
+<select id="newRole">
+<option value="Admin">Admin</option>
+<option value="User">User</option>
+</select><br>
+
+<select id="newStatus">
+<option value="Active">Active</option>
+<option value="Inactive">Inactive</option>
+</select><br>
+
+<button class="create-btn" onclick="createUser()">Create</button>
+
+</div></div>`;
+}
+
+  
+async function createUser() {
+  let user = getLoggedUser();
+if(user.role !== "Admin"){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
+  let username = document.getElementById("newUsername").value.trim();
+  let userID = document.getElementById("newUserID").value.trim();
+  let dept = document.getElementById("newDepartment").value.trim();
+  let password = document.getElementById("newPassword").value.trim();
+  let role = document.getElementById("newRole").value;
+  let status = document.getElementById("newStatus").value;
+
+  if (!username || !userID || !dept || !password)
+    return Swal.fire("Error", "All fields are required", "error");
+
+  let users = await getUsers();
+
+  if (users.find(u => u.username === username || u.userID === userID))
+    return Swal.fire("Error", "Username or User ID already exists", "error");
+
+  users.push({ username, userID, department: dept, password, role, status, pwdDate: new Date().toISOString() });
+
+  await saveUsers(users);
+  Swal.fire("Success", "User created successfully", "success");
+  createUserPage();
+}
+
+
+
+  
+async function viewUsers() {
+
+let user = getLoggedUser();
+
+if(user.role !== "Admin"){
+Swal.fire("Access Denied","Admin only feature","error");
+return;
+}
+
+let users = await getUsers();
+
+let rows = users.map(u => `<tr>
+<td>${u.username}</td>
+<td>${u.userID}</td>
+<td>${u.department}</td>
+<td>${u.role}</td>
+<td>${u.status}</td>
+
+<td>
+<span class="action" onclick="editUser('${u.username}')"><i class="fa fa-edit"></i></span>
+<span class="action" onclick="deleteUser('${u.username}')"><i class="fa fa-trash"></i></span>
+<span class="action" onclick="changeUserPassword('${u.username}')"><i class="fa fa-key"></i></span>
+</td>
+
+</tr>`).join("");
+
+contentArea.innerHTML = `<div class="card">
+<div class="card-body">
+
+<h2>User Management</h2>
+
+<table id="userTable" class="table table-bordered table-striped w-100">
+
+<thead class="table-dark">
+<tr>
+<th>Username</th>
+<th>User ID</th>
+<th>Department</th>
+<th>Role</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+${rows}
+</tbody>
+
+</table>
+
+</div>
+</div>`;
+
+setTimeout(()=>{
+
+$("#userTable").DataTable({
+pageLength: 10,
+orderCellsTop: true,
+lengthMenu: [[10,50,100,-1],[10,50,100,"All"]],
+scrollY: "400px",
+scrollCollapse: true,
+paging: true,
+fixedHeader: true
+});
+
+},200);
+
+}
+
+async function editUser(username) {
+  let users = await getUsers();
+  let user = users.find(u => u.username === username);
+  if (!user) return;
+  const { value } = await Swal.fire({
+    title: `Edit User: ${username}`,
+    html: `<input id="editDepartment" value="${user.department}" class="swal2-input">
+      <select id="editRole" class="swal2-input"><option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option><option value="User" ${user.role === 'User' ? 'selected' : ''}>User</option></select>
+      <select id="editStatus" class="swal2-input"><option value="Active" ${user.status === 'Active' ? 'selected' : ''}>Active</option><option value="Inactive" ${user.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select>`,
+    showCancelButton: true,
+    preConfirm: () => ({
+      department: document.getElementById("editDepartment").value,
+      role: document.getElementById("editRole").value,
+      status: document.getElementById("editStatus").value
+    })
+  });
+  if (value) {
+    user.department = value.department;
+    user.role = value.role;
+    user.status = value.status;
+    await saveUsers(users);
+    Swal.fire("Success", "User updated", "success");
+    viewUsers();
+  }
+}
+
+async function deleteUser(username) {
+  const result = await Swal.fire({
+    title: `Delete user ${username}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete'
+  });
+  if (result.isConfirmed) {
+    let users = await getUsers();
+    users = users.filter(u => u.username !== username);
+    await saveUsers(users);
+    Swal.fire("Deleted!", "User deleted", "success");
+    viewUsers();
+  }
+}
+
+async function changeUserPassword(username) {
+  let users = await getUsers();
+  let user = users.find(u => u.username === username);
+  if (!user) return;
+  const { value: newPassword } = await Swal.fire({
+    title: `Change Password for ${username}`,
+    input: "password",
+    inputLabel: "New Password",
+    inputPlaceholder: "Enter new password",
+    showCancelButton: true
+  });
+  if (newPassword) {
+    user.password = newPassword;
+    user.pwdDate = new Date().toISOString();
+    await saveUsers(users);
+    Swal.fire("Success", "Password changed successfully", "success");
+    if (username === JSON.parse(localStorage.getItem("loginUser")).username) {
+      localStorage.setItem("loginUser", JSON.stringify(user));
+    }
+  }
+}
+
+// --------------------- EXCEL MODULE --------------------- //
+function formatDate(value){ let d=new Date(value); if(isNaN(d)) return value; return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear(); }
+
+  function openExcelPage(){
+    contentArea.innerHTML=`<div class="card"><div class="card-body">
+        <h2>Excel Viewer</h2>
+        <input type="file" id="excelFile" class="form-control mb-3">
+        <ul class="nav nav-tabs mb-3" id="sheetTabs"></ul>
+        <div class="tab-content" id="tabContent"></div>
+    </div></div>`;
+
+    document.getElementById('excelFile').addEventListener('change',function(e){
+        let file=e.target.files[0]; if(!file) return;
+        let reader=new FileReader();
+        reader.onload=function(evt){
+            let data=new Uint8Array(evt.target.result);
+            let workbook=XLSX.read(data,{type:"array",cellDates:true});
+            const sheetTabs=document.getElementById("sheetTabs");
+            const tabContent=document.getElementById("tabContent");
+            sheetTabs.innerHTML=""; tabContent.innerHTML="";
+            workbook.SheetNames.forEach((name,index)=>{
+                let active=index===0?"active":"";
+                sheetTabs.innerHTML+=`<li class="nav-item"><button class="nav-link ${active}" data-bs-toggle="tab" data-bs-target="#tab${index}">${name}</button></li>`;
+                let sheet=workbook.Sheets[name]; let json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:"",blankrows:true});
+                if(json.length===0) return;
+                let headers=json[0]; let rows=json.slice(1);
+                let table=`<table id="tbl${index}" class="table table-bordered table-hover table-striped w-100"><thead><tr>`;
+                headers.forEach(h=>table+=`<th>${h||""}</th>`); table+="</tr><tr>";
+                headers.forEach(()=>table+=`<th><input class="form-control form-control-sm" placeholder="Filter"></th>`); table+="</tr></thead><tbody>";
+                rows.forEach((r,rowIndex)=>{ table+="<tr>"; for(let colIndex=0;colIndex<headers.length;colIndex++){ let val=r[colIndex]||""; let cell=XLSX.utils.encode_cell({r:rowIndex+1,c:colIndex}); let c=sheet[cell]; if(c && c.t==="d") val=formatDate(c.v); if(c && c.l && c.l.Target) table+=`<td><a href="${c.l.Target}" target="_blank">Link</a></td>`; else table+=`<td>${val}</td>`; } table+="</tr>"; });
+                table+="</tbody></table>";
+                let show=index===0?"show active":"";
+                tabContent.innerHTML+=`<div class="tab-pane fade ${show}" id="tab${index}">${table}</div>`;
+            });
+            $("table").each(function(){
+                if($.fn.DataTable.isDataTable(this)) $(this).DataTable().destroy();
+                let table=$(this).DataTable({pageLength:10,orderCellsTop:true,lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],scrollY:"400px",scrollCollapse:true,paging:true,fixedHeader:true,dom:'Blfrtip',buttons:['colvis','excel','csv','print']});
+                $(this).closest('.dataTables_wrapper').find("thead tr:eq(1) th input").each(function(i){ $(this).on("keyup change",function(){ if(table.column(i).search()!==this.value) table.column(i).search(this.value).draw(); }); });
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    });
+    /*document.getElementById('excelFile').click();*/
+}
+  // --------------------- CALCULATOR MODULE --------------------- //
+function openCalculatorPage(){
+
+contentArea.innerHTML = `
+<div class="card">
+<div class="card-body">
+<h2>Calculator</h2>
+
+<div style="width:320px;margin:auto">
+
+<input type="text" id="calcDisplay"
+class="form-control mb-3 text-end"
+style="height:50px;font-size:22px"
+readonly>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+
+<button class="btn btn-danger" onclick="clearCalc()">C</button>
+<button class="btn btn-secondary" onclick="appendCalc('%')">%</button>
+<button class="btn btn-warning" onclick="appendCalc('/')">/</button>
+<button class="btn btn-warning" onclick="appendCalc('*')">*</button>
+
+<button class="btn btn-light" onclick="appendCalc('7')">7</button>
+<button class="btn btn-light" onclick="appendCalc('8')">8</button>
+<button class="btn btn-light" onclick="appendCalc('9')">9</button>
+<button class="btn btn-warning" onclick="appendCalc('-')">-</button>
+
+<button class="btn btn-light" onclick="appendCalc('4')">4</button>
+<button class="btn btn-light" onclick="appendCalc('5')">5</button>
+<button class="btn btn-light" onclick="appendCalc('6')">6</button>
+<button class="btn btn-warning" onclick="appendCalc('+')">+</button>
+
+<button class="btn btn-light" onclick="appendCalc('1')">1</button>
+<button class="btn btn-light" onclick="appendCalc('2')">2</button>
+<button class="btn btn-light" onclick="appendCalc('3')">3</button>
+<button class="btn btn-success" onclick="calculateCalc()">=</button>
+
+<button class="btn btn-light" onclick="appendCalc('0')">0</button>
+<button class="btn btn-light" onclick="appendCalc('.')">.</button>
+
+</div>
+</div>
+
+</div>
+</div>`;
+}
+
+
+// Calculator Functions
+function appendCalc(val){
+document.getElementById("calcDisplay").value += val;
+}
+
+function clearCalc(){
+document.getElementById("calcDisplay").value = "";
+}
+
+function calculateCalc(){
+let expr = document.getElementById("calcDisplay").value;
+
+expr = expr.replace(/(\d+(\.\d+)?)%/g,"($1/100)");
+
+try{
+document.getElementById("calcDisplay").value = eval(expr);
+}
+catch{
+alert("Invalid Expression");
+}
+}
+
+  // Keyboard Support
+document.addEventListener("keydown", function(e){
+
+let display = document.getElementById("calcDisplay");
+if(!display) return;
+
+let key = e.key;
+
+if(!isNaN(key) || key=="." || key=="+" || key=="-" || key=="*" || key=="/" || key=="%"){
+display.value += key;
+}
+
+if(key=="Enter"){
+calculateCalc();
+}
+
+if(key=="Backspace"){
+display.value = display.value.slice(0,-1);
+}
+
+if(key=="Escape"){
+display.value = "";
+}
+
+});
+
+  // ...........To do list ...................//
+function openTodoPage(){
+
+contentArea.innerHTML = `
+
+<div class="card">
+<div class="card-body">
+
+<h2>Task Manager</h2>
+
+<div class="row mb-3">
+
+<div class="col">
+<input id="taskTitle" class="form-control" placeholder="Task Title">
+</div>
+
+<div class="col">
+<select id="taskPriority" class="form-control">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+</div>
+
+<div class="col">
+<input type="date" id="taskDate" class="form-control">
+</div>
+
+<div class="col">
+<select id="taskUser" class="form-control"></select>
+</div>
+
+<div class="col">
+<button class="btn btn-primary" onclick="addTask()">Add Task</button>
+</div>
+
+</div>
+
+<div class="mb-2">
+
+<input id="taskSearch" class="form-control"
+placeholder="Search Task"
+onkeyup="searchTasks()">
+
+</div>
+
+<div class="mb-3">
+<button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
+<button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
+</div>
+
+<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
+
+<thead class="table-dark">
+
+<tr>
+<th>Task</th>
+<th>Priority</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Completed Date</th>
+<th>Assigned to</th>
+<th>Assigned By</th>
+<th>No. of Days</th>
+<th>Comment</th>
+<th>Actions</th>
+</tr>
+
+<tr>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th></th>
+<th></th>
+</tr>
+
+</thead>
+
+<tbody id="taskTable"></tbody>
+
+</table>
+
+</div>
+</div>
+
+`;
+  
+  taskTable = $('#todoTable').DataTable({
+  
+  pageLength:10,
+  lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+  
+  paging:true,
+  orderCellsTop:true,
+  
+  autoWidth:false,
+  responsive:false,
+  
+  dom:'Blfrtip',
+  
+  buttons:[
+  'colvis',
+  {extend:'excel',title:'Task_Report'},
+  {extend:'csv',title:'Task_Report'},
+  {extend:'print'}
+  ],
+  
+  initComplete:function(){
+  
+  let api=this.api();
+  
+  api.columns().every(function(index){
+  
+  let column=this;
+  
+  $('input', api.table().header().rows[1].cells[index])
+  .on('keyup change clear',function(){
+  
+  column.search(this.value,true,false).draw();
+  
+  });
+  
+  });
+  
+  }
+  
+  });
+
+
+// ⭐ PASTE STATUS FILTER CODE HERE
+$('#todoTable thead tr:eq(1) th:eq(3) input').on('keyup change', function () {
+
+    let val = this.value;
+
+    taskTable.column(3)
+        .search(val ? val : '', true, false)
+        .draw();
+
+});
+
+
+loadUsersForAssign();
+loadTasks();
+}
+// LOAD USERS INTO ASSIGN DROPDOWN
+async function loadUsersForAssign(){
+
+let loggedUser=getLoggedUser();
+
+let select=document.getElementById("taskUser");
+
+if(loggedUser.role!=="Admin"){
+
+select.innerHTML=`<option>${loggedUser.username}</option>`;
+select.disabled=true;
+
+return;
+
+}
+
+let users=await getUsers();
+
+let options="";
+
+users.forEach(u=>{
+options+=`<option value="${u.username}">${u.username}</option>`;
+});
+
+select.innerHTML=options;
+
+}
+
+
+// CREATE TASK
+async function addTask() {
+  let title = document.getElementById("taskTitle").value.trim();
+
+  if (!title) {
+    Swal.fire("Validation", "Task title required", "warning");
+    return;
+  }
+
+  let priority = document.getElementById("taskPriority").value;
+  let due = document.getElementById("taskDate").value;
+  let loggedUser = getLoggedUser();
+  let assignedUser;
+
+  if (loggedUser.role === "Admin") {
+    assignedUser = document.getElementById("taskUser").value;
+  } else {
+    assignedUser = loggedUser.username;
+  }
+
+  let id = Date.now();
+
+  await set(ref(db, "tasks/" + id), {
+    id,
+    title,
+    priority,
+    due,
+    status: "Pending",
+    createdBy: loggedUser.username,
+    assignedTo: assignedUser,
+    assignedBy: loggedUser.username,  // <-- Added this line
+    comments: []
+  });
+
+  Swal.fire("Success", "Task created", "success");
+
+  loadTasks();
+}
+  
+
+  //Date Format dd-mm-yyyy
+function formatDate(date){
+
+if(!date) return "-";
+
+let d=new Date(date);
+
+let day=("0"+d.getDate()).slice(-2);
+let month=("0"+(d.getMonth()+1)).slice(-2);
+let year=d.getFullYear();
+
+return `${day}-${month}-${year}`;
+
+}
+
+
+// LOAD TASKS
+async function loadTasks(){
+
+const snapshot = await get(ref(db,"tasks"));
+
+let data=[];
+
+snapshot.forEach(child=>{
+
+let t = child.val();
+
+
+let commentCount = t.comments ? t.comments.length : 0;
+
+data.push([
+t.title,
+t.priority,
+formatDate(t.due),
+
+`<span onclick="changeStatus('${t.id}','${t.status}')"
+style="cursor:pointer;${statusColor(t.status)}">
+${t.status}
+</span>`,
+
+t.completedDate || "-",
+t.assignedTo,
+t.assignedBy || "-",
+calculateDays(t.due,t.completedDate),
+
+`<span onclick="taskComments('${t.id}')"
+style="cursor:pointer;color:#2563eb">
+<i class="fa fa-comment"></i> ${commentCount}
+</span>`,
+
+`
+<i class="fa fa-edit action"
+onclick="editTask('${t.id}')"></i>
+
+<i class="fa fa-trash action"
+onclick="deleteTask('${t.id}')"></i>
+`
+]);
+
+});
+
+taskTable.clear();
+taskTable.rows.add(data);
+taskTable.draw();
+taskTable.columns.adjust();
+taskTable.columns.adjust().draw();
+
+}
+
+  async function changeStatus(id,currentStatus){
+
+const { value: status } = await Swal.fire({
+title:"Update Status",
+input:"select",
+inputOptions:{
+"Pending":"Pending",
+"In-Progress":"In-Progress",
+"Completed":"Completed"
+},
+inputValue:currentStatus,
+showCancelButton:true,
+confirmButtonText:"Update"
+});
+
+if(!status) return;
+
+let updateData={status:status};
+
+if(status==="Completed"){
+
+let today=new Date().toISOString().split("T")[0];
+updateData.completedDate=today;
+
+}else{
+
+updateData.completedDate="";
+
+}
+
+await update(ref(db,"tasks/"+id),updateData);
+
+Swal.fire("Status Updated");
+
+loadTasks();
+
+}
+  
+    
+async function toggleTask(id){
+
+let loggedUser=getLoggedUser();
+
+const snap = await get(ref(db,"tasks/"+id));
+
+let task = snap.val();
+
+if(!task) return;
+
+if(loggedUser.role!=="Admin" && task.assignedTo!==loggedUser.username){
+
+Swal.fire("Access Denied","You can't change this task","error");
+
+return;
+
+}
+
+let newStatus = task.status==="Pending" ? "Completed" : "Pending";
+
+await update(ref(db,"tasks/"+id),{status:newStatus});
+
+loadTasks();
+
+}
+
+  
+async function editTask(id){
+
+let loggedUser = getLoggedUser();
+
+const snap = await get(ref(db,"tasks/"+id));
+let task = snap.val();
+
+if(!task) return;
+
+if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
+Swal.fire("Only Admin or Creator can edit");
+return;
+}
+
+// load existing values
+let title = task.title || "";
+let priority = task.priority || "Medium";
+let due = task.due || "";
+
+const { value: formValues } = await Swal.fire({
+
+title:"Edit Task",
+
+html:`
+
+<input id="editTitle" class="swal2-input"
+placeholder="Task Title"
+value="${title}">
+
+<select id="editPriority" class="swal2-input">
+<option value="High" ${priority==="High"?"selected":""}>High</option>
+<option value="Medium" ${priority==="Medium"?"selected":""}>Medium</option>
+<option value="Low" ${priority==="Low"?"selected":""}>Low</option>
+</select>
+
+<input type="date"
+id="editDue"
+class="swal2-input"
+value="${due}">
+
+`,
+
+showCancelButton:true,
+confirmButtonText:"Update",
+
+preConfirm:()=>{
+
+return{
+
+title:document.getElementById("editTitle").value,
+priority:document.getElementById("editPriority").value,
+due:document.getElementById("editDue").value
+
+};
+
+}
+
+});
+
+if(!formValues) return;
+
+// update firebase
+await update(ref(db,"tasks/"+id),{
+
+title:formValues.title,
+priority:formValues.priority,
+due:formValues.due
+
+});
+
+Swal.fire("Updated","Task updated successfully","success");
+
+loadTasks();
+
+}
+
+  
+async function deleteTask(id){
+
+let loggedUser=getLoggedUser();
+
+const snap=await get(ref(db,"tasks/"+id));
+
+let task=snap.val();
+
+if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
+
+Swal.fire("Access Denied","You can delete only your task","error");
+
+return;
+
+}
+
+await remove(ref(db,"tasks/"+id));
+
+Swal.fire("Deleted","Task removed","success");
+
+loadTasks();
+
+}
+
+async function taskComments(id){
+
+const snap = await get(ref(db,"tasks/"+id+"/comments"));
+
+let comments = snap.exists() ? snap.val() : [];
+
+let history="";
+
+comments.forEach(c=>{
+history+=`
+<div style="border-bottom:1px solid #eee;padding:5px">
+<b>${c.user}</b><br>
+${c.text}<br>
+<small>${c.time}</small>
+</div>
+`;
+});
+
+if(history==="") history="<i>No comments yet</i>";
+
+const { value: comment } = await Swal.fire({
+
+title:"Task Comments",
+
+html:`
+
+<div style="max-height:200px;overflow:auto;text-align:left;margin-bottom:10px">
+${history}
+</div>
+
+<input id="newComment" class="swal2-input" placeholder="Add new comment">
+
+`,
+
+showCancelButton:true,
+confirmButtonText:"Add",
+
+preConfirm:()=>{
+
+return document.getElementById("newComment").value;
+
+}
+
+});
+
+if(!comment) return;
+
+comments.push({
+
+user:getLoggedUser().username,
+text:comment,
+time:new Date().toLocaleString()
+
+});
+
+await set(ref(db,"tasks/"+id+"/comments"),comments);
+
+Swal.fire("Comment added");
+
+loadTasks();
+
+}
+  
+async function openKanban(){
+
+contentArea.innerHTML = `
+
+<h2>Kanban Board</h2>
+
+<div class="row">
+
+<div class="col-md-4">
+<h4>Pending</h4>
+<div id="pendingCol" class="kanban-column"></div>
+</div>
+
+<div class="col-md-4">
+<h4>Completed</h4>
+<div id="doneCol" class="kanban-column"></div>
+</div>
+
+</div>
+`;
+
+const snapshot = await get(ref(db,"tasks"));
+
+snapshot.forEach(child=>{
+
+let t = child.val();
+
+let card = document.createElement("div");
+
+card.className="kanban-card";
+
+card.dataset.id=t.id;
+
+card.innerHTML=`<b>${t.title}</b><br>${t.assignedTo}`;
+
+if(t.status=="Pending")
+document.getElementById("pendingCol").appendChild(card);
+
+else
+document.getElementById("doneCol").appendChild(card);
+
+});
+
+initDrag();
+
+}
+
+
+function initDrag(){
+
+["pendingCol","doneCol"].forEach(col=>{
+
+new Sortable(document.getElementById(col),{
+
+group:"tasks",
+
+animation:150,
+
+onEnd: async function(evt){
+
+let id = evt.item.dataset.id;
+
+let status="Pending";
+
+if(evt.to.id=="doneCol") status="Completed";
+
+await update(ref(db,"tasks/"+id),{status});
+
+}
+
+});
+
+});
+
+}
+
+//Due Date Range Filter
+async function filterDate(){
+
+let from=document.getElementById("fromDate").value;
+let to=document.getElementById("toDate").value;
+
+const snapshot=await get(ref(db,"tasks"));
+
+let rows="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(!t.due) return;
+
+if(t.due>=from && t.due<=to){
+
+rows+=`<tr>
+<td>${t.title}</td>
+<td>${t.priority}</td>
+<td>${formatDate(t.due)}</td>
+<td>${t.status}</td>
+<td>${t.assignedTo}</td>
+</tr>`;
+
+}
+
+});
+
+document.getElementById("taskTable").innerHTML=rows;
+
+}
+
+  //Search Task 
+
+function searchTasks(){
+
+let value=document.getElementById("taskSearch").value.toLowerCase();
+
+$("#taskTable tr").filter(function(){
+
+$(this).toggle(
+
+$(this).text().toLowerCase().indexOf(value)>-1
+
+);
+
+});
+
+}
+  
+
+//update to do status
+async function updateStatus(id,status){
+
+let updateData={status:status};
+
+if(status==="Completed"){
+
+let today = new Date().toISOString().split("T")[0];
+updateData.completedDate = today;
+
+}else{
+
+updateData.completedDate="";
+
+}
+
+await update(ref(db,"tasks/"+id),updateData);
+
+Swal.fire("Status updated");
+
+loadTasks();   // ✅ correct refresh
+
+}
+
+
+  
+function statusColor(status){
+
+if(status==="Pending") return "color:red;font-weight:bold";
+
+if(status==="In-Progress") return "color:orange;font-weight:bold";
+
+if(status==="Completed") return "color:green;font-weight:bold";
+
+return "";
+
+}
+
+
+function listenNotifications(){
+
+const user = getLoggedUser().username;
+
+onValue(ref(db,"tasks"), snapshot => {
+
+let count=0;
+let html="";
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(t.assignedTo===user && t.status==="Pending"){
+
+count++;
+
+html+=`
+<div style="padding:10px;border-bottom:1px solid #eee">
+
+<b>To-Do</b><br>
+Task: ${t.title}
+
+<div style="margin-top:5px">
+
+<button class="btn btn-sm btn-primary"
+onclick="openTodoPage()">
+Open
+</button>
+
+<button class="btn btn-sm btn-danger"
+onclick="deleteNotification('${t.id}')">
+Clear
+</button>
+
+</div>
+
+</div>
+`;
+
+}
+
+});
+
+document.getElementById("notifyCount").innerText=count;
+
+document.getElementById("notificationList").innerHTML =
+html || "<div style='padding:10px'>No Notifications</div>";
+
+});
+
+}
+
+  
+function toggleNotifications(){
+
+let box=document.getElementById("notificationBox");
+
+box.style.display = box.style.display==="block" ? "none" : "block";
+
+}
+
+async function deleteNotification(id){
+
+await update(ref(db,"tasks/"+id),{
+status:"Viewed"
+});
+
+}
+
+async function clearAllNotifications(){
+
+const user=getLoggedUser().username;
+
+const snapshot=await get(ref(db,"tasks"));
+
+snapshot.forEach(child=>{
+
+let t=child.val();
+
+if(t.assignedTo===user && t.status==="Pending"){
+
+update(ref(db,"tasks/"+t.id),{
+status:"Viewed"
+});
+
+}
+
+});
+
+}
+
+function calculateDays(dueDateStr, completedDateStr){
+
+if(!dueDateStr) return "-";
+
+let dueDate = new Date(dueDateStr);
+let completedDate = completedDateStr ? new Date(completedDateStr) : new Date();
+
+if(isNaN(dueDate) || isNaN(completedDate)) return "-";
+
+let diffTime = completedDate - dueDate;
+let diffDays = Math.floor(diffTime / (1000*60*60*24));
+
+if(!completedDateStr){
+if(diffDays > 0) return `<span style="color:red">Overdue ${diffDays} days</span>`;
+if(diffDays === 0) return `<span style="color:orange">Due Today</span>`;
+return `<span style="color:green">${Math.abs(diffDays)} days left</span>`;
+}
+
+if(diffDays > 0){
+return `<span style="color:red">Late by ${diffDays} days</span>`;
+}
+else if(diffDays < 0){
+return `<span style="color:green">Completed ${Math.abs(diffDays)} days early</span>`;
+}
+else{
+return `<span style="color:blue">Completed On Time</span>`;
+}
+
+}
+  
+  // ----------- AUTO LOGIN if stored -----------
+
+window.onload = () => {
+  let user = JSON.parse(sessionStorage.getItem("loginUser"));
+
+  if (user && user.username) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("displayUser").innerHTML = `${user.username} (${user.role})`;
+
+    resetTimer();
+    home();
+    listenNotifications();
+  } else {
+    document.getElementById("loginPage").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
+  }
+};
+
+
+  
+
+  //Assigning role functions w.r.t the all buttons
+function applyRoleAccess(){
+
+let role = getLoggedUser().role;
+
+document.querySelectorAll("[data-role]").forEach(btn=>{
+
+let roles = btn.getAttribute("data-role").split(",");
+
+if(!roles.includes(role)){
+btn.style.display="none";
+}
+
+});
+
+}
+ 
+
+  // Automatic Role Control (paste here at the very end)
+  (function() {
+    const checkRoles = () => {
+      const role = getLoggedUser().role;
+      document.querySelectorAll("[data-role]").forEach(btn => {
+        const roles = btn.getAttribute("data-role").split(",").map(r => r.trim());
+        btn.style.display = roles.includes(role) ? "inline-block" : "none";
+      });
+    };
+
+    // Run once on page load
+    checkRoles();
+
+    // Watch for dynamically added buttons
+    const observer = new MutationObserver(checkRoles);
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
+  
+</script>
 
 </body>
+
 </html>
