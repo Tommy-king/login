@@ -955,7 +955,7 @@ async function loadTasks() {
     `;
   });
 
-  // Insert rows into tbody
+  // Insert rows into tbody before DataTable init
   document.getElementById("taskTable").innerHTML = rows;
 
   // Destroy old table if exists
@@ -963,7 +963,7 @@ async function loadTasks() {
     $('#todoTable').DataTable().clear().destroy();
   }
 
-  // Initialize DataTable
+  // Initialize DataTable and store the instance
   let table = $('#todoTable').DataTable({
     pageLength: 10,
     lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
@@ -981,7 +981,7 @@ async function loadTasks() {
     ]
   });
 
-  // Apply column filters
+  // Unbind previous event handlers and bind column filters
   $("#todoTable thead tr:eq(1) th input").off("keyup change").on("keyup change", function () {
     let colIndex = $(this).parent().index();
     if (table.column(colIndex).search() !== this.value) {
@@ -989,16 +989,6 @@ async function loadTasks() {
     }
   });
 }
-  
-  // Debounce function to limit rapid input events firing
-  function debounce(func, wait) {
-    let timeout;
-    return function() {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, arguments), wait);
-    };
-  }
-
 
   
   
