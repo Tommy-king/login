@@ -72,6 +72,10 @@ thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
  table.dataTable {width:100% !important;}
 .dataTables_scrollHeadInner {width:100% !important;}
+  
+table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
+table.dataTable{table-layout:fixed;}
 
   /* KANBAN BOARD */
 
@@ -806,7 +810,7 @@ onkeyup="searchTasks()">
 </tr>
 
 <tr>
-<th><input class="form-control form-control-sm" </th>
+<th><input class="form-control form-control-sm" ></th>
 <th><input class="form-control form-control-sm" ></th>
 <th><input class="form-control form-control-sm" ></th>
 <th><input class="form-control form-control-sm" ></th>
@@ -829,6 +833,7 @@ onkeyup="searchTasks()">
 </div>
 
 `;
+  
 taskTable = $('#todoTable').DataTable({
     pageLength: 10,
     lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
@@ -845,7 +850,30 @@ taskTable = $('#todoTable').DataTable({
         { extend: 'excel', title: 'Task_Report' },
         { extend: 'csv', title: 'Task_Report' },
         { extend: 'print' }
-    ]
+    ],
+
+    initComplete: function () {
+
+        let api = this.api();
+
+        api.columns().every(function (index) {
+
+            let column = this;
+
+            $('input', api.table().header().rows[1].cells[index])
+                .on('keyup change clear', function () {
+
+                    if (column.search() !== this.value) {
+
+                        column.search(this.value).draw();
+
+                    }
+
+                });
+
+        });
+
+    }
 });
   
 loadUsersForAssign();
@@ -977,6 +1005,7 @@ calculateDays(t.due,t.completedDate),
 taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
+taskTable.columns.adjust();
 
 }
 
