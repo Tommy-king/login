@@ -916,65 +916,55 @@ return `${day}-${month}-${year}`;
 
 
 // LOAD TASKS
-async function loadTasks(){
+async function loadTasks() {
+  const snapshot = await get(ref(db,"tasks"));
+  
+  let rows = "";
+  let loggedUser = getLoggedUser();
 
-const snapshot = await get(ref(db,"tasks"));
+  snapshot.forEach(child => {
+    let t = child.val();
 
-let rows="";
+    if (loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username) {
+      return;
+    }
 
-let loggedUser=getLoggedUser();
+    rows += `
+      <tr>
+        <td>${t.title}</td>
+        <td>${t.priority}</td>
+        <td>${formatDate(t.due)}</td>
+        <td>
+          <select onchange="updateStatus('${t.id}', this.value)" style="${statusColor(t.status)}">
+            <option ${t.status === "Pending" ? "selected" : ""}>Pending</option>
+            <option ${t.status === "In-Progress" ? "selected" : ""}>In-Progress</option>
+            <option ${t.status === "Completed" ? "selected" : ""}>Completed</option>
+          </select>
+        </td>
+        <td>${t.completedDate || "-"}</td>
+        <td>${t.assignedTo}</td>
+        <td>${t.assignedBy || 'N/A'}</td>
+        <td>${calculateDays(t.due, t.completedDate)}</td>
+        <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
+        <td>
+          <i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>
+          ${t.comments && t.comments.length ? t.comments[t.comments.length - 1].text : "-"}
+        </td>
+        <td><i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i></td>
+      </tr>
+    `;
+  });
 
-snapshot.forEach(child=>{
+  // Insert rows into tbody
+  document.getElementById("taskTable").innerHTML = rows;
 
-let t=child.val();
+  // Destroy old table if exists
+  if ($.fn.DataTable.isDataTable('#todoTable')) {
+    $('#todoTable').DataTable().clear().destroy();
+  }
 
-/* USER RESTRICTION */
-
-if(loggedUser.role!=="Admin" && t.assignedTo!==loggedUser.username){
-return;
-}
-
-rows+=`
-
-<tr>
-  <td>${t.title}</td>
-  <td>${t.priority}</td>
-  <td>${formatDate(t.due)}</td>
-  <td>
-    <select onchange="updateStatus('${t.id}', this.value)" style="${statusColor(t.status)}">
-      <option ${t.status === "Pending" ? "selected" : ""}>Pending</option>
-      <option ${t.status === "In-Progress" ? "selected" : ""}>In-Progress</option>
-      <option ${t.status === "Completed" ? "selected" : ""}>Completed</option>
-    </select>
-  </td>
-  <td>${t.completedDate || "-"}</td>
-  <td>${t.assignedTo}</td>
-  <td>${t.assignedBy || 'N/A'}</td>
-  <td>${calculateDays(t.due, t.completedDate)}</td>
-  <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
-  <td>
-    <i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>
-    ${t.comments && t.comments.length ? t.comments[t.comments.length - 1].text : "-"}
-  </td>
-  <td>
-    <i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>
-  </td>
-</tr>
-
-`;
-
-});
-
-// First, render table HTML
-document.getElementById("taskTable").innerHTML = rows;
-
-// Destroy old table if exists
-if ($.fn.DataTable.isDataTable('#todoTable')) {
-    $('#todoTable').DataTable().destroy();
-}
-
-// Initialize DataTable
-let table = $('#todoTable').DataTable({
+  // Initialize DataTable and store reference
+  let table = $('#todoTable').DataTable({
     pageLength: 10,
     lengthMenu: [[10,50,100,-1],[10,50,100,"All"]],
     scrollY: "400px",
@@ -984,23 +974,34 @@ let table = $('#todoTable').DataTable({
     orderCellsTop: true,
     dom: 'Blfrtip',
     buttons: [
-        'colvis',
-        { extend:'excel', title:'Task_Report' },
-        { extend:'csv', title:'Task_Report' },
-        { extend:'print' }
+      'colvis',
+      { extend:'excel', title:'Task_Report' },
+      { extend:'csv', title:'Task_Report' },
+      { extend:'print' }
     ]
-});
+  });
 
-// Column filter
-$('#todoTable thead tr:eq(1) th input').each(function(i) {
-    $(this).on('keyup change', function() {
-        table
-            .column(i)      // use index 'i' from each()
-            .search(this.value)
-            .draw();
-    });
-});
-  
+  // Unbind any previous filter event handlers to avoid duplicates
+  $('#todoTable thead tr:eq(1) th input').off('keyup change');
+
+  // Bind column filter inputs with debounce
+  $('#todoTable thead tr:eq(1) th input').each(function(i) {
+    $(this).on('keyup change', debounce(function() {
+      table
+        .column(i)
+        .search(this.value)
+        .draw();
+    }, 300)); // 300ms debounce
+  });
+
+  // Debounce function to limit rapid input events firing
+  function debounce(func, wait) {
+    let timeout;
+    return function() {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, arguments), wait);
+    };
+  }
 }
   
 async function toggleTask(id){
