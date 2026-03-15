@@ -80,8 +80,15 @@ table.dataTable{table-layout:fixed;}
 /*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
 #userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
 
-  Table{width:100% !important;table-layout:fixed;}
-  Table th, Table td{white-space:nowrap;}
+table.dataTable{
+width:100% !important;
+table-layout:auto;
+}
+
+table.dataTable th,
+table.dataTable td{
+white-space:nowrap;
+}
 
 .dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
   /* KANBAN BOARD */
@@ -525,17 +532,19 @@ ${rows}
 
 setTimeout(()=>{
 
-$("#userTable").DataTable({
-pageLength: 10,
-orderCellsTop: true,
-lengthMenu: [[10,50,100,-1],[10,50,100,"All"]],
-scrollY: "400px",
-scrollCollapse: true,
-paging: true,
-fixedHeader: true
+let table = $("#userTable").DataTable({
+pageLength:10,
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+scrollY:"400px",
+scrollCollapse:true,
+paging:true,
+fixedHeader:true,
+autoWidth:false
 });
 
-},200);
+/*table.columns.adjust();*/
+
+},300);
 
 }
 
@@ -1549,6 +1558,10 @@ return `<span style="color:blue">Completed On Time</span>`;
 }
 
 }
+
+  $(window).on('resize', function () {
+$($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+});
   
   // ----------- AUTO LOGIN if stored -----------
 
