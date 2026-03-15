@@ -78,7 +78,20 @@ table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
 table.dataTable{table-layout:fixed;}
 
 /*Chartds & cords however */
-.card:hover{transform:scale(0.05);transition:0.2s;}
+/* KPI cards */
+.kpi-card:hover{
+transform:scale(1.05);
+transition:0.2s;
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
+cursor:pointer;
+}
+
+/* Chart cards */
+.chart-card:hover{
+transform:scale(1.02);
+transition:0.25s;
+box-shadow:0 6px 15px rgba(0,0,0,0.15);
+}
 
 /*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
 #userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
@@ -987,11 +1000,16 @@ async function loadTasks(){
 const snapshot = await get(ref(db,"tasks"));
 
 let data=[];
+let loggedUser = getLoggedUser();
 
 snapshot.forEach(child=>{
 
 let t = child.val();
 
+// ⭐ USER FILTER
+if(loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username){
+return; // skip other users tasks
+}
 
 let commentCount = t.comments ? t.comments.length : 0;
 
@@ -1030,9 +1048,9 @@ taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
 taskTable.columns.adjust();
-taskTable.columns.adjust().draw();
 
 }
+  
 
   async function changeStatus(id,currentStatus){
 
@@ -1631,8 +1649,17 @@ const taskSnap = await get(ref(db,"tasks"));
 const userSnap = await get(ref(db,"users"));
 
 let tasks = [];
+let loggedUser = getLoggedUser();
+
 if(taskSnap.exists()){
-tasks = Object.values(taskSnap.val());
+
+let allTasks = Object.values(taskSnap.val());
+
+tasks = allTasks.filter(t=>{
+if(loggedUser.role === "Admin") return true;
+return t.assignedTo === loggedUser.username;
+});
+
 }
   
 let users = {};
@@ -1862,6 +1889,14 @@ const snapshot = await get(ref(db,"tasks"));
 let rows="";
 
 snapshot.forEach(child=>{
+
+let t = child.val();
+
+let loggedUser = getLoggedUser();
+
+if(loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username){
+return;
+}
 
 let t = child.val();
 
