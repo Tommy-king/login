@@ -49,7 +49,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
 .sidebar{position:fixed;top:60px;left:0;width:220px;height:calc(100% - 60px);background:#58797d;color:#fff;padding-top:20px}
 .sidebar button{width:90%;margin:8px 10px;padding:12px;background:none;border:none;color:#fff;text-align:left;cursor:pointer;border-radius:4px}
 .sidebar button:hover{background:#374151}
-.content{margin-left:210px;margin-top:40px;padding:25px}
+/*.content{margin-left:210px;margin-top:40px;padding:25px}*/
 .card{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
 th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
@@ -70,6 +70,8 @@ table tbody tr:hover{background:#f5f7fa}
 body.dark table tbody tr:hover{background:#2a2f37}
 thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
+ table.dataTable {width:100% !important;}
+.dataTables_scrollHeadInner {width:100% !important;}
 
   /* KANBAN BOARD */
 
@@ -955,38 +957,46 @@ async function loadTasks() {
     `;
   });
 
-  // Insert rows into tbody before DataTable init
-  document.getElementById("taskTable").innerHTML = rows;
-
-  // Destroy old table if exists
+    // Destroy old table if exists
   if ($.fn.DataTable.isDataTable('#todoTable')) {
     $('#todoTable').DataTable().clear().destroy();
   }
+    // Insert rows into tbody before DataTable init
+  document.getElementById("taskTable").innerHTML = rows;
+  
+      // Initialize DataTable and store the instance
+    let table = $('#todoTable').DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+        scrollY: "400px",
+        scrollCollapse: true,
+        paging: true,
+        fixedHeader: true,
+        orderCellsTop: true,
+        autoWidth:false,
+        responsive:true,
+        dom: 'Blfrtip',
+        buttons: [
+            'colvis',
+            { extend: 'excel', title: 'Task_Report' },
+            { extend: 'csv', title: 'Task_Report' },
+            { extend: 'print' }
+        ]
+    });
+    
+    setTimeout(function(){
+        table.columns.adjust().draw();
+    },200);
 
-  // Initialize DataTable and store the instance
-  let table = $('#todoTable').DataTable({
-    pageLength: 10,
-    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
-    scrollY: "400px",
-    scrollCollapse: true,
-    paging: true,
-    fixedHeader: true,
-    orderCellsTop: true,
-    dom: 'Blfrtip',
-    buttons: [
-      'colvis',
-      { extend: 'excel', title: 'Task_Report' },
-      { extend: 'csv', title: 'Task_Report' },
-      { extend: 'print' }
-    ]
-  });
-
-  // Unbind previous event handlers and bind column filters
-  $("#todoTable thead tr:eq(1) th input").off("keyup change").on("keyup change", function () {
-    let colIndex = $(this).parent().index();
-    if (table.column(colIndex).search() !== this.value) {
-      table.column(colIndex).search(this.value).draw();
-    }
+    // Unbind previous event handlers and bind column filters
+  $("#todoTable thead tr:eq(1) th input").on("keyup change", function () {
+  
+      let column = table.column($(this).parent().index());
+  
+      if (column.search() !== this.value) {
+          column.search(this.value).draw();
+      }
+  
   });
 }
 
@@ -1354,7 +1364,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status updated");
 
-loadTasks();
+$('#todoTable').DataTable().ajax.reload(null,false);
 
 }
 
