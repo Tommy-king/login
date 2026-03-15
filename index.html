@@ -965,55 +965,39 @@ rows+=`
 
 });
 
+// First, render table rows
 document.getElementById("taskTable").innerHTML = rows;
 
-/* destroy old table */
-
+// Destroy old DataTable if exists
 if ($.fn.DataTable.isDataTable('#todoTable')) {
-$('#todoTable').DataTable().destroy();
+    $('#todoTable').DataTable().destroy();
 }
 
-/* initialize datatable */
-setTimeout(()=>{
-
-let table = $('#todoTable').DataTable({
-pageLength:10,
-lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
-scrollY:"400px",
-scrollCollapse:true,
-paging:true,
-fixedHeader:true,
-orderCellsTop:true,
-dom:'Blfrtip',
-buttons:[
-'colvis',
-{
-extend:'excel',
-title:'Task_Report'
-},
-{
-extend:'csv',
-title:'Task_Report'
-},
-{
-extend:'print'
-}
-]
+// Initialize new DataTable
+const table = $('#todoTable').DataTable({
+    pageLength: 10,
+    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+    scrollY: "400px",
+    scrollCollapse: true,
+    paging: true,
+    fixedHeader: true,
+    orderCellsTop: true,
+    dom: 'Blfrtip',
+    buttons: [
+        'colvis',
+        { extend: 'excel', title: 'Task_Report' },
+        { extend: 'csv', title: 'Task_Report' },
+        { extend: 'print' }
+    ]
 });
 
-/* COLUMN FILTER */
-
-$("#todoTable thead tr:eq(1) th input").on("keyup change", function () {
-
-let colIndex = $(this).parent().index();
-
-table.column(colIndex).search(this.value).draw();
-
+// COLUMN FILTER
+// Make sure you attach filter AFTER table is initialized
+$("#todoTable thead tr:eq(1) th input").on("keyup change", function() {
+    const colIndex = $(this).parent().index();
+    table.column(colIndex).search(this.value).draw();
 });
-
-},200);
   
-
   
 async function toggleTask(id){
 
