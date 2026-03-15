@@ -1356,9 +1356,8 @@ let updateData={status:status};
 
 if(status==="Completed"){
 
-let today=new Date().toLocaleDateString("en-GB");
-
-updateData.completedDate=today;
+let today = new Date().toISOString().split("T")[0];
+updateData.completedDate = today;
 
 }else{
 
@@ -1479,13 +1478,34 @@ status:"Viewed"
 
 }
 
-  function calculateDays(dueDateStr, completedDateStr) {
-  if (!dueDateStr || !completedDateStr) return '';
-  const dueDate = new Date(dueDateStr);
-  const completedDate = new Date(completedDateStr);
-  const diffTime = dueDate - completedDate;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+function calculateDays(dueDateStr, completedDateStr){
+
+if(!dueDateStr) return "-";
+
+let dueDate = new Date(dueDateStr);
+let completedDate = completedDateStr ? new Date(completedDateStr) : new Date();
+
+if(isNaN(dueDate) || isNaN(completedDate)) return "-";
+
+let diffTime = completedDate - dueDate;
+let diffDays = Math.floor(diffTime / (1000*60*60*24));
+
+if(!completedDateStr){
+if(diffDays > 0) return `<span style="color:red">Overdue ${diffDays} days</span>`;
+if(diffDays === 0) return `<span style="color:orange">Due Today</span>`;
+return `<span style="color:green">${Math.abs(diffDays)} days left</span>`;
+}
+
+if(diffDays > 0){
+return `<span style="color:red">Late by ${diffDays} days</span>`;
+}
+else if(diffDays < 0){
+return `<span style="color:green">Completed ${Math.abs(diffDays)} days early</span>`;
+}
+else{
+return `<span style="color:blue">Completed On Time</span>`;
+}
+
 }
   
   // ----------- AUTO LOGIN if stored -----------
