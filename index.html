@@ -32,9 +32,6 @@
 <!-- Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
- <!---hashed password using CryptoJS.-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-
 <style>
 /* your existing CSS here (unchanged) */
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
@@ -335,12 +332,11 @@ let password = document.getElementById("loginPass").value.trim();
     let foundUser = null;
 
     // Find the user
-    let hashPass = CryptoJS.SHA256(password).toString();
     Object.values(users).forEach(user => {
-      if (user.username === username && user.password === hashPass) {
-            foundUser = user;
-          }
-        });
+      if (user.username === username && user.password === password) {
+        foundUser = user;
+      }
+    });
 
     if (!foundUser) {
       Swal.fire("Login Failed", "Invalid username or password", "error");
@@ -352,7 +348,8 @@ let password = document.getElementById("loginPass").value.trim();
       return;
     }
 
-
+    // Save logged-in user
+    localStorage.setItem("loginUser", JSON.stringify(foundUser));
 
     // Show dashboard and hide login
     document.getElementById("loginPage").style.display = "none";
@@ -458,8 +455,7 @@ return;
   let username = document.getElementById("newUsername").value.trim();
   let userID = document.getElementById("newUserID").value.trim();
   let dept = document.getElementById("newDepartment").value.trim();
-  let rawPassword = document.getElementById("newPassword").value.trim();
-  let password = CryptoJS.SHA256(rawPassword).toString();
+  let password = document.getElementById("newPassword").value.trim();
   let role = document.getElementById("newRole").value;
   let status = document.getElementById("newStatus").value;
 
