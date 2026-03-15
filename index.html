@@ -957,14 +957,15 @@ async function loadTasks() {
     `;
   });
 
-    // Destroy old table if exists
-  if ($.fn.DataTable.isDataTable('#todoTable')) {
-    $('#todoTable').DataTable().clear().destroy();
-  }
-    // Insert rows into tbody before DataTable init
-  document.getElementById("taskTable").innerHTML = rows;
-  
-      // Initialize DataTable and store the instance
+    // destroy old table
+    if ($.fn.DataTable.isDataTable('#todoTable')) {
+        $('#todoTable').DataTable().destroy();
+    }
+    
+    // insert rows
+    document.getElementById("taskTable").innerHTML = rows;
+    
+    // rebuild datatable
     let table = $('#todoTable').DataTable({
         pageLength: 10,
         lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
@@ -984,6 +985,7 @@ async function loadTasks() {
         ]
     });
     
+    // fix column width
     setTimeout(function(){
         table.columns.adjust().draw();
     },200);
@@ -991,11 +993,9 @@ async function loadTasks() {
     // Unbind previous event handlers and bind column filters
   $("#todoTable thead tr:eq(1) th input").on("keyup change", function () {
   
-      let column = table.column($(this).parent().index());
+      let columnIndex = $(this).parent().index();
   
-      if (column.search() !== this.value) {
-          column.search(this.value).draw();
-      }
+      table.column(columnIndex).search(this.value).draw();
   
   });
 }
@@ -1144,7 +1144,7 @@ rows+=`
 });
 
 document.getElementById("taskTable").innerHTML=rows;
-
+loadTasks();
 }
 
 async function openTaskDashboard() {
