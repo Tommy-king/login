@@ -77,6 +77,20 @@ table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
 .dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
 table.dataTable{table-layout:fixed;}
 
+  #todoTable{
+width:100% !important;
+table-layout:fixed;
+}
+
+#todoTable th,
+#todoTable td{
+white-space:nowrap;
+}
+
+.dataTables_scrollHeadInner,
+.dataTables_scrollHeadInner table{
+width:100% !important;
+}
   /* KANBAN BOARD */
 
 .kanban-column{
@@ -834,49 +848,46 @@ onkeyup="searchTasks()">
 
 `;
   
-taskTable = $('#todoTable').DataTable({
-    pageLength: 10,
-    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
-    scrollY: "400px",
-    scrollX: true,
-    scrollCollapse: true,
-    paging: true,
-    fixedHeader: false,
-    orderCellsTop: true,
-    autoWidth:false,
-    responsive:false,
-    dom: 'Blfrtip',
-
-    buttons: [
-        'colvis',
-        { extend: 'excel', title: 'Task_Report' },
-        { extend: 'csv', title: 'Task_Report' },
-        { extend: 'print' }
-    ],
-
-    initComplete: function () {
-
-        let api = this.api();
-
-        api.columns().every(function (index) {
-
-            let column = this;
-
-            $('input', api.table().header().rows[1].cells[index])
-                .on('keyup change clear', function () {
-
-                    if (column.search() !== this.value) {
-
-                        column.search(this.value).draw();
-
-                    }
-
-                });
-
-        });
-
-    }
-});
+  taskTable = $('#todoTable').DataTable({
+  
+  pageLength:10,
+  lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+  
+  paging:true,
+  orderCellsTop:true,
+  
+  autoWidth:false,
+  responsive:false,
+  
+  dom:'Blfrtip',
+  
+  buttons:[
+  'colvis',
+  {extend:'excel',title:'Task_Report'},
+  {extend:'csv',title:'Task_Report'},
+  {extend:'print'}
+  ],
+  
+  initComplete:function(){
+  
+  let api=this.api();
+  
+  api.columns().every(function(index){
+  
+  let column=this;
+  
+  $('input', api.table().header().rows[1].cells[index])
+  .on('keyup change clear',function(){
+  
+  column.search(this.value,true,false).draw();
+  
+  });
+  
+  });
+  
+  }
+  
+  });
 
 
 // ⭐ PASTE STATUS FILTER CODE HERE
@@ -1019,6 +1030,7 @@ taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
 taskTable.columns.adjust();
+taskTable.columns.adjust().draw();
 
 }
 
