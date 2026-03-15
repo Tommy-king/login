@@ -1572,48 +1572,41 @@ contentArea.innerHTML = `
 <div class="row text-center mb-4">
 
 <div class="col-md-3">
-<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTodoPage()">
+<div class="card bg-primary text-white shadow" style="cursor:pointer" onclick="openTodoPage()">
 <div class="card-body">
-<h4 id="kpiTotal">0</h4>
+<h3 id="kpiTotal">0</h3>
 Total Tasks
 </div>
 </div>
 </div>
 
 <div class="col-md-3">
-<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('pending')">
+<div class="card bg-warning text-white shadow" style="cursor:pointer" onclick="openTaskTable('pending')">
 <div class="card-body">
-<h4 id="kpiPending">0</h4>
+<h3 id="kpiPending">0</h3>
 Pending
 </div>
 </div>
 </div>
 
 <div class="col-md-3">
-<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('completed')">
+<div class="card bg-success text-white shadow" style="cursor:pointer" onclick="openTaskTable('completed')">
 <div class="card-body">
-<h4 id="kpiCompleted">0</h4>
+<h3 id="kpiCompleted">0</h3>
 Completed
 </div>
 </div>
 </div>
 
 <div class="col-md-3">
-<div class="card bg-warning text-white" style="cursor:pointer" onclick="openTaskTable('overdue')">
+<div class="card bg-danger text-white shadow" style="cursor:pointer" onclick="openTaskTable('overdue')">
 <div class="card-body">
-<h4 id="kpiOverdue">0</h4>
+<h3 id="kpiOverdue">0</h3>
 Overdue
 </div>
 </div>
 </div>
 
-</div>
-
-
-<div class="row">
-
-<div class="col-md-6">
-<canvas id="trendChart"></canvas>
 </div>
 
 <div class="col-md-6">
