@@ -965,18 +965,18 @@ rows+=`
 
 });
 
-// First, render table rows
+// First, render table HTML
 document.getElementById("taskTable").innerHTML = rows;
 
-// Destroy old DataTable if exists
+// Destroy old table if exists
 if ($.fn.DataTable.isDataTable('#todoTable')) {
     $('#todoTable').DataTable().destroy();
 }
 
-// Initialize new DataTable
-const table = $('#todoTable').DataTable({
+// Initialize DataTable
+let table = $('#todoTable').DataTable({
     pageLength: 10,
-    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+    lengthMenu: [[10,50,100,-1],[10,50,100,"All"]],
     scrollY: "400px",
     scrollCollapse: true,
     paging: true,
@@ -985,17 +985,20 @@ const table = $('#todoTable').DataTable({
     dom: 'Blfrtip',
     buttons: [
         'colvis',
-        { extend: 'excel', title: 'Task_Report' },
-        { extend: 'csv', title: 'Task_Report' },
-        { extend: 'print' }
+        { extend:'excel', title:'Task_Report' },
+        { extend:'csv', title:'Task_Report' },
+        { extend:'print' }
     ]
 });
 
-// COLUMN FILTER
-// Make sure you attach filter AFTER table is initialized
-$("#todoTable thead tr:eq(1) th input").on("keyup change", function() {
-    const colIndex = $(this).parent().index();
-    table.column(colIndex).search(this.value).draw();
+// Column filter
+$('#todoTable thead tr:eq(1) th input').each(function(i) {
+    $(this).on('keyup change', function() {
+        table
+            .column(i)      // use index 'i' from each()
+            .search(this.value)
+            .draw();
+    });
 });
   
 }
