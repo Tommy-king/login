@@ -244,6 +244,7 @@ cursor:grab;
     <button onclick="createUserPage()" id="menuCreate" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
     <button onclick="viewUsers()" id="menuUsers" data-role="Admin"><i class="fa fa-users"></i> User Management</button>
     <button onclick="openExcelPage()" data-role="Admin"> <i class="fa fa-file-excel"></i> Excel Viewer</button>
+    <button onclick="openAuditLogs()" data-role="Admin"><i class="fa fa-history"></i> Audit Logs</button>
   </div>
 
   <!-- Dynamic content container -->
@@ -273,10 +274,18 @@ document.addEventListener("mousemove", resetTimer);
 document.addEventListener("keypress", resetTimer);
 function resetTimer(){
   clearTimeout(timer);
-  timer = setTimeout(() => {
-    Swal.fire("Session Timeout", "Auto logout", "info");
-    logout();
-  }, AUTO_LOGOUT_MINUTES * 60000);
+timer = setTimeout(async () => {
+
+Swal.fire("Session Timeout", "Auto logout", "info");
+
+await writeAuditLog(
+"Session",
+"Auto Logout (Session Timeout)"
+);
+
+logout();
+
+}, AUTO_LOGOUT_MINUTES * 60000);
 }
 
 // ----------- FIREBASE USER FUNCTIONS ------------
@@ -356,6 +365,7 @@ let password = document.getElementById("loginPass").value.trim();
 
     if (!foundUser) {
       Swal.fire("Login Failed", "Invalid username or password", "error");
+      await writeAuditLog("Login","User Login Failed ("+username+")");
       return;
     }
 
@@ -372,6 +382,7 @@ let password = document.getElementById("loginPass").value.trim();
     document.getElementById("dashboard").style.display = "block";
     document.getElementById("displayUser").innerHTML = `${foundUser.username} (${foundUser.role})`;
 
+    await writeAuditLog("Login","User Login (Success)");
     // Update UI access for buttons based on data-role
     updateUIAccess();
     listenNotifications();
@@ -384,10 +395,19 @@ let password = document.getElementById("loginPass").value.trim();
     console.error(error);
   }
 }
-function logout() {
-  localStorage.removeItem("loginUser");
-  document.getElementById("loginPage").style.display = "block";
-  document.getElementById("dashboard").style.display = "none";
+  
+async function logout(){
+
+await writeAuditLog(
+"Logout",
+"User Logout"
+);
+
+localStorage.removeItem("loginUser");
+
+document.getElementById("loginPage").style.display="block";
+document.getElementById("dashboard").style.display="none";
+
 }
 
 // ----------- DASHBOARD ------------
@@ -487,6 +507,7 @@ return;
 
   await saveUsers(users);
   Swal.fire("Success", "User created successfully", "success");
+  await writeAuditLog("User Management","Create User ("+username+")");
   createUserPage();
 }
 
@@ -586,6 +607,7 @@ async function editUser(username) {
     user.status = value.status;
     await saveUsers(users);
     Swal.fire("Success", "User updated", "success");
+    await writeAuditLog("User Management","Update User ("+username+")");
     viewUsers();
   }
 }
@@ -602,6 +624,7 @@ async function deleteUser(username) {
     users = users.filter(u => u.username !== username);
     await saveUsers(users);
     Swal.fire("Deleted!", "User deleted", "success");
+    await writeAuditLog("User Management","Delete User ("+username+")");
     viewUsers();
   }
 }
@@ -973,6 +996,7 @@ async function addTask() {
   });
 
   Swal.fire("Success", "Task created", "success");
+  await writeAuditLog("Task Manager","Add Task ("+title+")");
 
   loadTasks();
 }
@@ -1189,6 +1213,7 @@ due:formValues.due
 });
 
 Swal.fire("Updated","Task updated successfully","success");
+await writeAuditLog("Task Manager","Update Task ("+formValues.title+")");
 
 loadTasks();
 
@@ -1214,6 +1239,7 @@ return;
 await remove(ref(db,"tasks/"+id));
 
 Swal.fire("Deleted","Task removed","success");
+await writeAuditLog("Task Manager","Delete Task ("+task.title+")");
 
 loadTasks();
 
@@ -2007,7 +2033,6 @@ window.onload = () => {
 };
 
 
-  
 
   //Assigning role functions w.r.t the all buttons
 function applyRoleAccess(){
@@ -2044,6 +2069,161 @@ btn.style.display="none";
     const observer = new MutationObserver(checkRoles);
     observer.observe(document.body, { childList: true, subtree: true });
   })();
+
+
+  /* ===============================
+   AUDIT TRAIL FUNCTION
+================================ */
+
+async function writeAuditLog(functionName, activity){
+
+let user = JSON.parse(localStorage.getItem("loginUser") || "{}");
+
+let username = user.username || "Unknown";
+
+let logID = Date.now();
+
+let ip="Unknown";
+
+try{
+let res = await fetch("https://api.ipify.org?format=json");
+let data = await res.json();
+ip=data.ip;
+}catch(e){
+console.log("IP fetch failed");
+}
+
+await set(ref(db,"auditLogs/"+logID),{
+
+username:username,
+functionName:functionName,
+activity:activity,
+ipAddress:ip,
+dateTime:new Date().toLocaleString()
+
+});
+
+}
+
+
+//AUDIT LOG VIEWER FUNCTION
+  async function openAuditLogs(){
+
+let user=getLoggedUser();
+
+if(user.role!=="Admin"){
+Swal.fire("Access Denied","Admin only","error");
+return;
+}
+
+const snapshot = await get(ref(db,"auditLogs"));
+
+let rows="";
+
+if(snapshot.exists()){
+
+snapshot.forEach(child=>{
+
+let log = child.val();
+
+rows+=`
+<tr>
+<td>${log.username}</td>
+<td>${log.functionName}</td>
+<td>${log.activity}</td>
+<td>${log.ipAddress}</td>
+<td>${log.dateTime}</td>
+</tr>
+`;
+
+});
+
+}
+
+contentArea.innerHTML=`
+
+<div class="card">
+<div class="card-body">
+
+<h2>Audit Trail Logs</h2>
+
+<table id="auditTable" class="table table-bordered table-striped w-100">
+
+<thead class="table-dark">
+
+<tr>
+<th>User</th>
+<th>Function</th>
+<th>Activity</th>
+<th>IP Address</th>
+<th>Date & Time</th>
+</tr>
+
+<tr>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+</tr>
+
+</thead>
+
+<tbody>
+${rows || "<tr><td colspan='5'>No Logs</td></tr>"}
+</tbody>
+
+</table>
+
+</div>
+</div>
+`;
+
+setTimeout(()=>{
+
+let table=$("#auditTable").DataTable({
+
+pageLength:10,
+
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+
+scrollY:"400px",
+
+scrollCollapse:true,
+
+paging:true,
+
+fixedHeader:true,
+
+dom:'Blfrtip',
+
+buttons:[
+'colvis',
+{extend:'excel',title:'Audit_Logs'},
+{extend:'csv',title:'Audit_Logs'},
+{extend:'print'}
+],
+
+order:[[4,"desc"]]
+
+});
+
+table.columns().every(function(index){
+
+$('input',table.table().header().rows[1].cells[index])
+.on('keyup change',function(){
+
+table.column(index)
+.search(this.value)
+.draw();
+
+});
+
+});
+
+},300);
+
+}
   
 </script>
 
