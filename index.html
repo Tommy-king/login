@@ -1644,14 +1644,21 @@ const taskSnap = await get(ref(db,"tasks"));
 const userSnap = await get(ref(db,"users"));
 
 let tasks = [];
-taskSnap.forEach(child => tasks.push(child.val()));
-
+if(taskSnap.exists()){
+tasks = Object.values(taskSnap.val());
+}
+  
 let users = {};
-userSnap.forEach(child=>{
-let u = child.val();
+
+if(userSnap.exists()){
+
+let userList = Object.values(userSnap.val());
+
+userList.forEach(u=>{
 users[u.username] = u.department;
 });
 
+}
 
 /* ---------------- KPI CALCULATION ---------------- */
 
