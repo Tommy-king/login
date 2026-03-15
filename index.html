@@ -1533,7 +1533,7 @@ let t=child.val();
 if(t.assignedTo===user && t.status==="Pending"){
 
 update(ref(db,"tasks/"+t.id),{
-status:"Viewed"
+status:"Pending"
 });
 
 }
