@@ -222,6 +222,9 @@ const PASSWORD_EXPIRY_DAYS = 30;
 let timer;
 const contentArea = document.getElementById("contentArea");
 
+let taskTable; 
+
+  
 function getLoggedUser(){
   return JSON.parse(localStorage.getItem("loginUser") || "{}");
 }
@@ -826,7 +829,25 @@ onkeyup="searchTasks()">
 </div>
 
 `;
-
+taskTable = $('#todoTable').DataTable({
+    pageLength: 10,
+    lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+    scrollY: "400px",
+    scrollCollapse: true,
+    paging: true,
+    fixedHeader: true,
+    orderCellsTop: true,
+    autoWidth:false,
+    responsive:true,
+    dom: 'Blfrtip',
+    buttons: [
+        'colvis',
+        { extend: 'excel', title: 'Task_Report' },
+        { extend: 'csv', title: 'Task_Report' },
+        { extend: 'print' }
+    ]
+});
+  
 loadUsersForAssign();
 loadTasks();
   /* APPLY ROLE PERMISSION AGAIN */
@@ -918,86 +939,45 @@ return `${day}-${month}-${year}`;
 
 
 // LOAD TASKS
-async function loadTasks() {
-  const snapshot = await get(ref(db, "tasks"));
-  let rows = "";
-  let loggedUser = getLoggedUser();
+async function loadTasks(){
 
-  snapshot.forEach(child => {
-    let t = child.val();
+const snapshot = await get(ref(db,"tasks"));
 
-    /* USER RESTRICTION */
-    if (loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username) {
-      return;
-    }
+let data=[];
 
-    rows += `
-      <tr>
-        <td>${t.title}</td>
-        <td>${t.priority}</td>
-        <td>${formatDate(t.due)}</td>
-        <td>
-          <select onchange="updateStatus('${t.id}', this.value)" style="${statusColor(t.status)}">
-            <option ${t.status === "Pending" ? "selected" : ""}>Pending</option>
-            <option ${t.status === "In-Progress" ? "selected" : ""}>In-Progress</option>
-            <option ${t.status === "Completed" ? "selected" : ""}>Completed</option>
-          </select>
-        </td>
-        <td>${t.completedDate || "-"}</td>
-        <td>${t.assignedTo}</td>
-        <td>${t.assignedBy || 'N/A'}</td>
-        <td>${calculateDays(t.due, t.completedDate)}</td>
-        <td><i class="fa fa-edit action" onclick="editTask('${t.id}')"></i></td>
-        <td>
-          <i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>
-          ${t.comments && t.comments.length ? t.comments[t.comments.length - 1].text : "-"}
-        </td>
-        <td><i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i></td>
-      </tr>
-    `;
-  });
+snapshot.forEach(child=>{
 
-    // destroy old table
-    if ($.fn.DataTable.isDataTable('#todoTable')) {
-        $('#todoTable').DataTable().destroy();
-    }
-    
-    // insert rows
-    document.getElementById("taskTable").innerHTML = rows;
-    
-    // rebuild datatable
-    let table = $('#todoTable').DataTable({
-        pageLength: 10,
-        lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
-        scrollY: "400px",
-        scrollCollapse: true,
-        paging: true,
-        fixedHeader: true,
-        orderCellsTop: true,
-        autoWidth:false,
-        responsive:true,
-        dom: 'Blfrtip',
-        buttons: [
-            'colvis',
-            { extend: 'excel', title: 'Task_Report' },
-            { extend: 'csv', title: 'Task_Report' },
-            { extend: 'print' }
-        ]
-    });
-    
-    // fix column width
-    setTimeout(function(){
-        table.columns.adjust().draw();
-    },200);
+let t = child.val();
 
-    // Unbind previous event handlers and bind column filters
-  $("#todoTable thead tr:eq(1) th input").on("keyup change", function () {
-  
-      let columnIndex = $(this).parent().index();
-  
-      table.column(columnIndex).search(this.value).draw();
-  
-  });
+data.push([
+t.title,
+t.priority,
+formatDate(t.due),
+
+`<select onchange="updateStatus('${t.id}', this.value)" style="${statusColor(t.status)}">
+<option ${t.status==="Pending"?"selected":""}>Pending</option>
+<option ${t.status==="In-Progress"?"selected":""}>In-Progress</option>
+<option ${t.status==="Completed"?"selected":""}>Completed</option>
+</select>`,
+
+t.completedDate || "-",
+t.assignedTo,
+t.assignedBy || "-",
+calculateDays(t.due,t.completedDate),
+
+`<i class="fa fa-edit action" onclick="editTask('${t.id}')"></i>`,
+
+`<i class="fa fa-comment action" onclick="taskComments('${t.id}')"></i>`,
+
+`<i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>`
+]);
+
+});
+
+taskTable.clear();
+taskTable.rows.add(data);
+taskTable.draw();
+
 }
 
   
@@ -1364,10 +1344,12 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status updated");
 
-$('#todoTable').DataTable().ajax.reload(null,false);
+loadTasks();   // ✅ correct refresh
 
 }
 
+
+  
 function statusColor(status){
 
 if(status==="Pending") return "color:red;font-weight:bold";
