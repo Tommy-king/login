@@ -838,13 +838,15 @@ taskTable = $('#todoTable').DataTable({
     pageLength: 10,
     lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
     scrollY: "400px",
+    scrollX: true,
     scrollCollapse: true,
     paging: true,
-    fixedHeader: true,
+    fixedHeader: false,
     orderCellsTop: true,
     autoWidth:false,
-    responsive:true,
+    responsive:false,
     dom: 'Blfrtip',
+
     buttons: [
         'colvis',
         { extend: 'excel', title: 'Task_Report' },
@@ -875,12 +877,23 @@ taskTable = $('#todoTable').DataTable({
 
     }
 });
-  
+
+
+// ⭐ PASTE STATUS FILTER CODE HERE
+$('#todoTable thead tr:eq(1) th:eq(3) input').on('keyup change', function () {
+
+    let val = this.value;
+
+    taskTable.column(3)
+        .search(val ? val : '', true, false)
+        .draw();
+
+});
+
+
 loadUsersForAssign();
 loadTasks();
-  /* APPLY ROLE PERMISSION AGAIN */
 }
-
 // LOAD USERS INTO ASSIGN DROPDOWN
 async function loadUsersForAssign(){
 
