@@ -77,6 +77,8 @@ table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
 .dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
 table.dataTable{table-layout:fixed;}
 
+  .card:hover{transform:scale(1.05);transition:0.2s;}
+  
 /*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
 #userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
 
@@ -787,14 +789,6 @@ contentArea.innerHTML = `
 <div class="col">
 <button class="btn btn-primary" onclick="addTask()">Add Task</button>
 </div>
-
-</div>
-
-<div class="mb-2">
-
-<input id="taskSearch" class="form-control"
-placeholder="Search Task"
-onkeyup="searchTasks()">
 
 </div>
 
