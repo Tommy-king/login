@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin System</title>
@@ -20,186 +19,109 @@
 
 <!-- CUSTOM CSS -->
 <link rel="stylesheet" href="css/style.css">
-
 </head>
 
 <body>
 
 <!-- LOGIN PAGE -->
-
 <div id="loginPage">
-
-<h2>User Login</h2>
-
-<input id="loginUser" placeholder="Username">
-
-<input id="loginPass" type="password" placeholder="Password">
-
-<br><br>
-
-<button onclick="login()">Login</button>
-
+    <h2>User Login</h2>
+    <input id="loginUser" placeholder="Username">
+    <input id="loginPass" type="password" placeholder="Password">
+    <br><br>
+    <button onclick="login()">Login</button>
 </div>
-
 
 <!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
 
-<div id="dashboard">
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="logo">
+            <i class="fa fa-chart-line"></i> Admin System
+        </div>
 
-<!-- TOPBAR -->
+        <div class="ribbon">
+            <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">
+                Notepad
+            </button>
+            <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">
+                ChatGPT
+            </button>
+            <button onclick="createUserPage()" data-role="Admin">
+                <i class="fa fa-user-plus"></i> Create User
+            </button>
+            <button onclick="openExcelPage()" data-role="Admin,User">
+                <i class="fa fa-file-excel"></i> Open Excel
+            </button>
+            <button onclick="openTodoPage()" data-role="Admin,User">
+                <i class="fa fa-list-check"></i> To-Do List
+            </button>
+        </div>
+    </div>
 
-<div class="topbar">
+    <!-- USER AREA -->
+    <div class="user-area">
+        <div style="position:relative">
+            <i class="fa fa-bell" onclick="toggleNotifications()" style="cursor:pointer;font-size:18px"></i>
+            <span id="notifyCount"
+                style="position:absolute;top:-5px;right:-10px;background:red;color:white;border-radius:50%;padding:3px 7px;font-size:11px;">0</span>
 
-<div class="logo">
-<i class="fa fa-chart-line"></i> Admin System
+            <div id="notificationBox">
+                <div class="notification-header">
+                    Notifications
+                    <span onclick="closeNotifications()">X</span>
+                </div>
+                <div id="notificationList"></div>
+                <div class="notification-footer">
+                    <button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <span id="displayUser" onclick="changePassword()" style="cursor:pointer;font-weight:bold;"></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <button onclick="home()">
+            <i class="fa fa-home"></i> Dashboard
+        </button>
+        <button onclick="createUserPage()" data-role="Admin">
+            <i class="fa fa-user-plus"></i> Create User
+        </button>
+        <button onclick="viewUsers()" data-role="Admin">
+            <i class="fa fa-users"></i> User Management
+        </button>
+        <button onclick="openExcelPage()" data-role="Admin">
+            <i class="fa fa-file-excel"></i> Excel Viewer
+        </button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content" id="contentArea"></div>
 </div>
-
-<div class="ribbon">
-
-<button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">
-Notepad
-</button>
-
-<button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">
-ChatGPT
-</button>
-
-<button onclick="createUserPage()" data-role="Admin">
-<i class="fa fa-user-plus"></i> Create User
-</button>
-
-<button onclick="openExcelPage()" data-role="Admin,User">
-<i class="fa fa-file-excel"></i> Open Excel
-</button>
-
-<button onclick="openTodoPage()" data-role="Admin,User">
-<i class="fa fa-list-check"></i> To-Do List
-</button>
-
-</div>
-
-
-<!-- USER AREA -->
-
-<div class="user-area">
-
-<div style="position:relative">
-
-<i class="fa fa-bell"
-onclick="toggleNotifications()"
-style="cursor:pointer;font-size:18px"></i>
-
-<span id="notifyCount"
-style="
-position:absolute;
-top:-5px;
-right:-10px;
-background:red;
-color:white;
-border-radius:50%;
-padding:3px 7px;
-font-size:11px;">0</span>
-
-
-<div id="notificationBox">
-
-<div class="notification-header">
-
-Notifications
-
-<span onclick="closeNotifications()">X</span>
-
-</div>
-
-<div id="notificationList"></div>
-
-<div class="notification-footer">
-
-<button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
-Clear All
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<span id="displayUser"
-onclick="changePassword()"
-style="cursor:pointer;font-weight:bold;"></span>
-
-<button onclick="logout()">Logout</button>
-
-</div>
-
-</div>
-
-
-<!-- SIDEBAR -->
-
-<div class="sidebar">
-
-<button onclick="home()">
-<i class="fa fa-home"></i> Dashboard
-</button>
-
-<button onclick="createUserPage()" data-role="Admin">
-<i class="fa fa-user-plus"></i> Create User
-</button>
-
-<button onclick="viewUsers()" data-role="Admin">
-<i class="fa fa-users"></i> User Management
-</button>
-
-<button onclick="openExcelPage()" data-role="Admin">
-<i class="fa fa-file-excel"></i> Excel Viewer
-</button>
-
-</div>
-
-
-<!-- MAIN CONTENT -->
-
-<div class="content" id="contentArea"></div>
-
-</div>
-
 
 <!-- JS LIBRARIES -->
-
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
-
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
 <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
-<!-- MAIN APP MODULE -->
-
+<!-- MAIN APP MODULE (ES6 MODULE) -->
 <script type="module" src="js/app.js"></script>
 
 </body>
-
 </html>
