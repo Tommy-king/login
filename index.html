@@ -77,20 +77,13 @@ table.dataTable thead th,table.dataTable tbody td{white-space: nowrap;}
 .dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
 table.dataTable{table-layout:fixed;}
 
-  #todoTable{
-width:100% !important;
-table-layout:fixed;
-}
+/*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
+#userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
 
-#todoTable th,
-#todoTable td{
-white-space:nowrap;
-}
+  Table{width:100% !important;table-layout:fixed;}
+  Table th, Table td{white-space:nowrap;}
 
-.dataTables_scrollHeadInner,
-.dataTables_scrollHeadInner table{
-width:100% !important;
-}
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
   /* KANBAN BOARD */
 
 .kanban-column{
@@ -797,10 +790,6 @@ onkeyup="searchTasks()">
 </div>
 
 <div class="mb-3">
-<button class="btn btn-outline-secondary btn-sm" onclick="loadTasks()">All</button>
-<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('Pending')">Pending</button>
-<button class="btn btn-outline-warning btn-sm" onclick="filterTasks('In-Progress')">In-Progress</button>
-<button class="btn btn-outline-success btn-sm" onclick="filterTasks('Completed')">Completed</button>
 <button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
 </div>
@@ -999,6 +988,9 @@ snapshot.forEach(child=>{
 
 let t = child.val();
 
+
+let commentCount = t.comments ? t.comments.length : 0;
+
 data.push([
 t.title,
 t.priority,
@@ -1014,8 +1006,10 @@ t.assignedTo,
 t.assignedBy || "-",
 calculateDays(t.due,t.completedDate),
 
-`<i class="fa fa-comment action"
-onclick="taskComments('${t.id}')"></i>`,
+`<span onclick="taskComments('${t.id}')"
+style="cursor:pointer;color:#2563eb">
+<i class="fa fa-comment"></i> ${commentCount}
+</span>`,
 
 `
 <i class="fa fa-edit action"
@@ -1104,27 +1098,81 @@ loadTasks();
   
 async function editTask(id){
 
-let loggedUser=getLoggedUser();
+let loggedUser = getLoggedUser();
 
-const snap=await get(ref(db,"tasks/"+id));
+const snap = await get(ref(db,"tasks/"+id));
+let task = snap.val();
 
-let task=snap.val();
+if(!task) return;
 
 if(loggedUser.role!=="Admin" && task.createdBy!==loggedUser.username){
 Swal.fire("Only Admin or Creator can edit");
 return;
 }
 
-let newTitle=prompt("Edit Task",task.title);
+// load existing values
+let title = task.title || "";
+let priority = task.priority || "Medium";
+let due = task.due || "";
 
-if(!newTitle) return;
+const { value: formValues } = await Swal.fire({
 
-await update(ref(db,"tasks/"+id),{title:newTitle});
+title:"Edit Task",
+
+html:`
+
+<input id="editTitle" class="swal2-input"
+placeholder="Task Title"
+value="${title}">
+
+<select id="editPriority" class="swal2-input">
+<option value="High" ${priority==="High"?"selected":""}>High</option>
+<option value="Medium" ${priority==="Medium"?"selected":""}>Medium</option>
+<option value="Low" ${priority==="Low"?"selected":""}>Low</option>
+</select>
+
+<input type="date"
+id="editDue"
+class="swal2-input"
+value="${due}">
+
+`,
+
+showCancelButton:true,
+confirmButtonText:"Update",
+
+preConfirm:()=>{
+
+return{
+
+title:document.getElementById("editTitle").value,
+priority:document.getElementById("editPriority").value,
+due:document.getElementById("editDue").value
+
+};
+
+}
+
+});
+
+if(!formValues) return;
+
+// update firebase
+await update(ref(db,"tasks/"+id),{
+
+title:formValues.title,
+priority:formValues.priority,
+due:formValues.due
+
+});
+
+Swal.fire("Updated","Task updated successfully","success");
 
 loadTasks();
 
 }
 
+  
 async function deleteTask(id){
 
 let loggedUser=getLoggedUser();
@@ -1151,39 +1199,66 @@ loadTasks();
 
 async function taskComments(id){
 
-let comment = await Swal.fire({
-title:"Add Comment",
-input:"text",
-inputPlaceholder:"Enter comment...",
-showCancelButton:true
-});
-
-if(!comment.value) return;
-
 const snap = await get(ref(db,"tasks/"+id+"/comments"));
 
 let comments = snap.exists() ? snap.val() : [];
 
+let history="";
+
+comments.forEach(c=>{
+history+=`
+<div style="border-bottom:1px solid #eee;padding:5px">
+<b>${c.user}</b><br>
+${c.text}<br>
+<small>${c.time}</small>
+</div>
+`;
+});
+
+if(history==="") history="<i>No comments yet</i>";
+
+const { value: comment } = await Swal.fire({
+
+title:"Task Comments",
+
+html:`
+
+<div style="max-height:200px;overflow:auto;text-align:left;margin-bottom:10px">
+${history}
+</div>
+
+<input id="newComment" class="swal2-input" placeholder="Add new comment">
+
+`,
+
+showCancelButton:true,
+confirmButtonText:"Add",
+
+preConfirm:()=>{
+
+return document.getElementById("newComment").value;
+
+}
+
+});
+
+if(!comment) return;
+
 comments.push({
 
 user:getLoggedUser().username,
-text:comment.value,
+text:comment,
 time:new Date().toLocaleString()
 
 });
 
 await set(ref(db,"tasks/"+id+"/comments"),comments);
 
-Swal.fire({
-icon:"success",
-title:"Comment added"
-});
+Swal.fire("Comment added");
 
-/* refresh table */
 loadTasks();
 
 }
-
   
 async function openKanban(){
 
