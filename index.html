@@ -51,6 +51,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
 .sidebar button:hover{background:#374151}
 /*.content{margin-left:210px;margin-top:40px;padding:25px}*/
 .card{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
 th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
 th{background:#f1f5f9;font-weight:600}
 .action{cursor:pointer;margin-right:10px}
@@ -69,61 +70,19 @@ table tbody tr:hover{background:#f5f7fa}
 body.dark table tbody tr:hover{background:#2a2f37}
 thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
-
-  /* =====Table  PROFESSIONAL TABLE STYLE ===== */
-table.dataTable{
-width:100% !important;
-}
-
-.dataTables_scrollBody{
-border-bottom:1px solid #ddd;
-}
+ table.dataTable {width:100% !important;}
+.dataTables_scrollHeadInner {width:100% !important;}
   
-table.dataTable th,
-table.dataTable td{
-white-space:nowrap;
-}
-  
-.table-container{
-width:100%;
-overflow-x:auto;
-}
-
-table.dataTable{
-width:100% !important;
-font-size:13px;
-table-layout:auto;
-}
-
-table.dataTable th,
-table.dataTable td{
-white-space:normal;
+table.dataTable thead th,
+table.dataTable tbody td{
+white-space:normal !important;
 word-break:break-word;
-vertical-align:middle;
+overflow-wrap:break-word;
 }
-
-table.dataTable thead th{
-background:#343a40;
-color:white;
-font-weight:600;
-}
-
-table.dataTable tbody tr:hover{
-background:#f3f4f6;
-}
-
-.dataTables_wrapper .dataTables_filter input{
-border-radius:6px;
-padding:5px;
-}
-
-.dataTables_wrapper .dataTables_length select{
-border-radius:6px;
-padding:5px;
-}
-
-
   
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
+table.dataTable{table-layout:fixed;}
+
 /*Chartds & cords however */
 /* KPI cards */
 .kpi-card:hover{
@@ -140,6 +99,24 @@ transition:0.25s;
 box-shadow:0 6px 15px rgba(0,0,0,0.15);
 }
 
+/*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
+#userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
+
+table.dataTable{
+width:100% !important;
+table-layout:fixed;
+}
+
+td{
+word-break:break-all;
+}
+
+table.dataTable th,
+table.dataTable td{
+white-space:nowrap;
+}
+
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
   /* KANBAN BOARD */
 
 .kanban-column{
@@ -156,25 +133,6 @@ margin-bottom:10px;
 border-radius:6px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 cursor:grab;
-}
-
-/* ===== DataTable Header Body Alignment Fix ===== */
-
-table.dataTable{
-width:100% !important;
-table-layout:auto;
-border-collapse:collapse;
-}
-
-table.dataTable th,
-table.dataTable td{
-padding:10px !important;
-box-sizing:border-box;
-}
-
-thead input{
-width:95% !important;
-box-sizing:border-box;
 }
   
 </style>
@@ -619,9 +577,22 @@ ${rows}
 </div>
 </div>`;
 
-setTimeout(() => {
-  let table = initCommonTable('#userTable');
-}, 0);
+setTimeout(()=>{
+
+let table = $("#userTable").DataTable({
+pageLength:10,
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+scrollY:"400px",
+scrollCollapse:true,
+paging:true,
+fixedHeader:true,
+autoWidth:false
+});
+
+/*table.columns.adjust();*/
+
+},300);
+
 }
 
 async function editUser(username) {
@@ -691,174 +662,49 @@ async function changeUserPassword(username) {
 }
 
 // --------------------- EXCEL MODULE --------------------- //
-function formatDate(value){
-    let d=new Date(value);
-    if(isNaN(d)) return value;
-    return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear();
-}
+function formatDate(value){ let d=new Date(value); if(isNaN(d)) return value; return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear(); }
 
-function openExcelPage() {
+  function openExcelPage(){
+    contentArea.innerHTML=`<div class="card"><div class="card-body">
+        <h2>Excel Viewer</h2>
+        <input type="file" id="excelFile" class="form-control mb-3">
+        <ul class="nav nav-tabs mb-3" id="sheetTabs"></ul>
+        <div class="tab-content" id="tabContent"></div>
+    </div></div>`;
 
-  contentArea.innerHTML = `
-  <div class="card">
-    <div class="card-body">
-
-      <h2>Excel Viewer</h2>
-
-      <input type="file" id="excelFile" class="form-control mb-3">
-
-      <ul class="nav nav-tabs mb-3" id="sheetTabs"></ul>
-
-      <div class="tab-content" id="tabContent"></div>
-
-    </div>
-  </div>
-  `;
-
-  document.getElementById('excelFile').addEventListener('change', function(e) {
-
-    let file = e.target.files[0];
-    if (!file) return;
-
-    let reader = new FileReader();
-
-    reader.onload = function(evt) {
-
-      let data = new Uint8Array(evt.target.result);
-
-      let workbook = XLSX.read(data, {
-        type: "array",
-        cellDates: true
-      });
-
-      const sheetTabs = document.getElementById("sheetTabs");
-      const tabContent = document.getElementById("tabContent");
-
-      sheetTabs.innerHTML = "";
-      tabContent.innerHTML = "";
-
-      workbook.SheetNames.forEach((name, index) => {
-
-        let active = index === 0 ? "active" : "";
-
-        sheetTabs.innerHTML += `
-          <li class="nav-item">
-            <button class="nav-link ${active}" 
-              data-bs-toggle="tab" 
-              data-bs-target="#tab${index}">
-              ${name}
-            </button>
-          </li>
-        `;
-
-        let sheet = workbook.Sheets[name];
-
-        let json = XLSX.utils.sheet_to_json(sheet, {
-          header: 1,
-          defval: "",
-          blankrows: true
-        });
-
-        if (json.length === 0) return;
-
-        let headers = json[0];
-        let rows = json.slice(1);
-
-        let table = `
-          <table id="tbl${index}" class="table table-bordered table-striped table-hover w-100">
-          <thead>
-            <tr>
-        `;
-
-        headers.forEach(h => {
-          table += `<th>${h || ""}</th>`;
-        });
-
-        table += `</tr><tr>`;
-
-        headers.forEach(() => {
-          table += `<th><input class="form-control form-control-sm" placeholder="Filter"></th>`;
-        });
-
-        table += `</tr></thead><tbody>`;
-
-        rows.forEach((r, rowIndex) => {
-          table += "<tr>";
-
-          for (let colIndex = 0; colIndex < headers.length; colIndex++) {
-
-            let val = r[colIndex] || "";
-
-            let cell = XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex });
-            let c = sheet[cell];
-
-            if (c && c.t === "d") val = formatDate(c.v);
-
-            if (c && c.l && c.l.Target) {
-              table += `<td><a href="${c.l.Target}" target="_blank">Link</a></td>`;
-            } else {
-              table += `<td>${val}</td>`;
-            }
-          }
-
-          table += "</tr>";
-        });
-
-        table += `</tbody></table>`;
-
-        let show = index === 0 ? "show active" : "";
-
-        tabContent.innerHTML += `
-          <div class="tab-pane fade ${show}" id="tab${index}">
-            ${table}
-          </div>
-        `;
-      });
-
-      /* ---------- DataTable Initialization ---------- */
-
-      $("#tabContent table").each(function() {
-
-        if ($.fn.DataTable.isDataTable(this)) {
-          $(this).DataTable().destroy();
-        }
-
-        // Initialize DataTable for this specific table
-        let table = initCommonTable(this);
-
-        /* column filters */
-        $(this)
-          .closest('.dataTables_wrapper')
-          .find("thead tr:eq(1) th input")
-          .each(function(i) {
-            $(this).on("keyup change", function() {
-              if (table.column(i).search() !== this.value) {
-                table
-                  .column(i)
-                  .search(this.value)
-                  .draw();
-              }
+    document.getElementById('excelFile').addEventListener('change',function(e){
+        let file=e.target.files[0]; if(!file) return;
+        let reader=new FileReader();
+        reader.onload=function(evt){
+            let data=new Uint8Array(evt.target.result);
+            let workbook=XLSX.read(data,{type:"array",cellDates:true});
+            const sheetTabs=document.getElementById("sheetTabs");
+            const tabContent=document.getElementById("tabContent");
+            sheetTabs.innerHTML=""; tabContent.innerHTML="";
+            workbook.SheetNames.forEach((name,index)=>{
+                let active=index===0?"active":"";
+                sheetTabs.innerHTML+=`<li class="nav-item"><button class="nav-link ${active}" data-bs-toggle="tab" data-bs-target="#tab${index}">${name}</button></li>`;
+                let sheet=workbook.Sheets[name]; let json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:"",blankrows:true});
+                if(json.length===0) return;
+                let headers=json[0]; let rows=json.slice(1);
+                let table=`<table id="tbl${index}" class="table table-bordered table-hover table-striped w-100"><thead><tr>`;
+                headers.forEach(h=>table+=`<th>${h||""}</th>`); table+="</tr><tr>";
+                headers.forEach(()=>table+=`<th><input class="form-control form-control-sm" placeholder="Filter"></th>`); table+="</tr></thead><tbody>";
+                rows.forEach((r,rowIndex)=>{ table+="<tr>"; for(let colIndex=0;colIndex<headers.length;colIndex++){ let val=r[colIndex]||""; let cell=XLSX.utils.encode_cell({r:rowIndex+1,c:colIndex}); let c=sheet[cell]; if(c && c.t==="d") val=formatDate(c.v); if(c && c.l && c.l.Target) table+=`<td><a href="${c.l.Target}" target="_blank">Link</a></td>`; else table+=`<td>${val}</td>`; } table+="</tr>"; });
+                table+="</tbody></table>";
+                let show=index===0?"show active":"";
+                tabContent.innerHTML+=`<div class="tab-pane fade ${show}" id="tab${index}">${table}</div>`;
             });
-          });
-
-      });
-
-    };
-
-    reader.readAsArrayBuffer(file);
-
-  });
-
-  /* ---------- Fix Column Alignment When Switching Tabs ---------- */
-
-  $(document).on('shown.bs.tab', function() {
-    $($.fn.dataTable.tables(true))
-      .DataTable()
-      .columns.adjust();
-  });
-
+            $("table").each(function(){
+                if($.fn.DataTable.isDataTable(this)) $(this).DataTable().destroy();
+                let table=$(this).DataTable({pageLength:10,orderCellsTop:true,lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],scrollY:"400px",scrollCollapse:true,paging:true,fixedHeader:true,dom:'Blfrtip',buttons:['colvis','excel','csv','print']});
+                $(this).closest('.dataTables_wrapper').find("thead tr:eq(1) th input").each(function(i){ $(this).on("keyup change",function(){ if(table.column(i).search()!==this.value) table.column(i).search(this.value).draw(); }); });
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    });
+    /*document.getElementById('excelFile').click();*/
 }
-  
   // --------------------- CALCULATOR MODULE --------------------- //
 function openCalculatorPage(){
 
@@ -1039,11 +885,63 @@ contentArea.innerHTML = `
 
 `;
   
-  taskTable = initCommonTable('#todoTable');
+  taskTable = $('#todoTable').DataTable({
+  
+  pageLength:10,
+  lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+  
+  paging:true,
+  orderCellsTop:true,
+  
+  autoWidth:false,
+  responsive:false,
+  
+  dom:'Blfrtip',
+  
+  buttons:[
+  'colvis',
+  {extend:'excel',title:'Task_Report'},
+  {extend:'csv',title:'Task_Report'},
+  {extend:'print'}
+  ],
+  
+  initComplete:function(){
+  
+  let api=this.api();
+  
+  api.columns().every(function(index){
+  
+  let column=this;
+  
+  $('input', api.table().header().rows[1].cells[index])
+  .on('keyup change clear',function(){
+  
+  column.search(this.value,true,false).draw();
+  
+  });
+  
+  });
+  
+  }
+  
+  });
+
+
+// ⭐ PASTE STATUS FILTER CODE HERE
+$('#todoTable thead tr:eq(1) th:eq(3) input').on('keyup change', function () {
+
+    let val = this.value;
+
+    taskTable.column(3)
+        .search(val ? val : '', true, false)
+        .draw();
+
+});
+
+
 loadUsersForAssign();
 loadTasks();
 }
-  
 // LOAD USERS INTO ASSIGN DROPDOWN
 async function loadUsersForAssign(){
 
@@ -2119,14 +2017,9 @@ ${rows || "<tr><td colspan='6'>No Tasks Found</td></tr>"}
 `;
 
 }
+  
 
-//Tables global 
-
-$(window).on('resize', function () {
-$($.fn.dataTable.tables(true)).DataTable().columns.adjust();
-});
-
-$(document).on('shown.bs.tab', function () {
+  $(window).on('resize', function () {
 $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
 });
   
@@ -2151,118 +2044,20 @@ window.onload = () => {
 
 
 
-  
+  //Assigning role functions w.r.t the all buttons
+function applyRoleAccess(){
 
-function initCommonTable(tableID){
+let role = getLoggedUser().role;
 
-if($.fn.DataTable.isDataTable(tableID)){
-$(tableID).DataTable().destroy();
-}
+document.querySelectorAll("[data-role]").forEach(btn=>{
 
-let table = $(tableID).DataTable({
+let roles = btn.getAttribute("data-role").split(",");
 
-pageLength:10,
-
-lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
-
-scrollY:"450px",
-scrollX:true,
-scrollCollapse:true,
-
-autoWidth:false,
-responsive:false,
-
-orderCellsTop:true,
-
-paging:true,
-stateSave:true,
-
-fixedHeader:false,
-
-processing:true,
-deferRender:true,
-
-dom:'Blfrtip',
-
-columnDefs:[
-{
-targets:"_all",
-className:"dt-body-left"
-}
-],
-
-buttons:[
-
-'colvis',
-
-{
-extend:'excel',
-title:'Report'
-},
-
-{
-extend:'csv',
-title:'Report'
-},
-
-{
-extend:'print',
-title:'Report',
-customize:function(win){
-
-$(win.document.body).css('font-size','10pt');
-
-$(win.document.body).find('table')
-.addClass('compact')
-.css('font-size','10pt');
-
-$(win.document.body).find('td').css({
-'white-space':'normal',
-'word-break':'break-word'
-});
-
-$(win.document.body).find('th').css({
-'white-space':'normal'
-});
-
-}
-}
-
-]
-
-});
-
-
-/* ===== COLUMN FILTER FIX ===== */
-
-$(tableID + ' thead input').each(function(){
-
-let colIndex = $(this).parent().index();
-
-$(this).off('keyup change').on('keyup change', function(){
-
-if(table.column(colIndex).search() !== this.value){
-
-table
-.column(colIndex)
-.search(this.value)
-.draw();
-
+if(!roles.includes(role)){
+btn.style.display="none";
 }
 
 });
-
-});
-
-
-/* ===== ALIGNMENT FIX AFTER LOAD ===== */
-
-setTimeout(function(){
-table.columns.adjust().draw();
-},200);
-
-
-return table;
 
 }
  
@@ -2322,26 +2117,26 @@ dateTime:new Date().toLocaleString()
 
 
 //AUDIT LOG VIEWER FUNCTION
-async function openAuditLogs(){
+  async function openAuditLogs(){
 
-let user = getLoggedUser();
+let user=getLoggedUser();
 
-if(user.role !== "Admin"){
+if(user.role!=="Admin"){
 Swal.fire("Access Denied","Admin only","error");
 return;
 }
 
 const snapshot = await get(ref(db,"auditLogs"));
 
-let rows = "";
+let rows="";
 
 if(snapshot.exists()){
 
-snapshot.forEach(child => {
+snapshot.forEach(child=>{
 
 let log = child.val();
 
-rows += `
+rows+=`
 <tr>
 <td>${log.username}</td>
 <td>${log.functionName}</td>
@@ -2355,16 +2150,14 @@ rows += `
 
 }
 
-contentArea.innerHTML = `
+contentArea.innerHTML=`
 
 <div class="card">
 <div class="card-body">
 
 <h2>Audit Trail Logs</h2>
 
-<div class="table-container">
-
-<table id="auditTable" class="table table-bordered table-striped table-hover w-100">
+<table id="auditTable" class="table table-bordered table-striped w-100">
 
 <thead class="table-dark">
 
@@ -2393,18 +2186,52 @@ ${rows || "<tr><td colspan='5'>No Logs</td></tr>"}
 </table>
 
 </div>
-
-</div>
 </div>
 `;
 
-/* initialize table using common function */
+setTimeout(()=>{
 
-setTimeout(() => {
+let table=$("#auditTable").DataTable({
 
-auditTable = initCommonTable('#auditTable');
+pageLength:10,
 
-}, 200);
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+
+scrollY:"400px",
+
+scrollCollapse:true,
+
+paging:true,
+
+fixedHeader:true,
+
+dom:'Blfrtip',
+
+buttons:[
+'colvis',
+{extend:'excel',title:'Audit_Logs'},
+{extend:'csv',title:'Audit_Logs'},
+{extend:'print'}
+],
+
+order:[[4,"desc"]]
+
+});
+
+table.columns().every(function(index){
+
+$('input',table.table().header().rows[1].cells[index])
+.on('keyup change',function(){
+
+table.column(index)
+.search(this.value)
+.draw();
+
+});
+
+});
+
+},300);
 
 }
   
