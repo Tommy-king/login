@@ -51,7 +51,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#fff}
 .sidebar button:hover{background:#374151}
 /*.content{margin-left:210px;margin-top:40px;padding:25px}*/
 .card{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
 th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
 th{background:#f1f5f9;font-weight:600}
 .action{cursor:pointer;margin-right:10px}
@@ -70,19 +69,49 @@ table tbody tr:hover{background:#f5f7fa}
 body.dark table tbody tr:hover{background:#2a2f37}
 thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
- table.dataTable {width:100% !important;}
-.dataTables_scrollHeadInner {width:100% !important;}
-  
-table.dataTable thead th,
-table.dataTable tbody td{
-white-space:normal !important;
-word-break:break-word;
-overflow-wrap:break-word;
+
+  /* =====Table  PROFESSIONAL TABLE STYLE ===== */
+
+.table-container{
+width:100%;
+overflow-x:auto;
 }
+
+table.dataTable{
+width:100% !important;
+font-size:13px;
+table-layout:auto;
+}
+
+table.dataTable th,
+table.dataTable td{
+white-space:normal;
+word-break:break-word;
+vertical-align:middle;
+}
+
+table.dataTable thead th{
+background:#343a40;
+color:white;
+font-weight:600;
+}
+
+table.dataTable tbody tr:hover{
+background:#f3f4f6;
+}
+
+.dataTables_wrapper .dataTables_filter input{
+border-radius:6px;
+padding:5px;
+}
+
+.dataTables_wrapper .dataTables_length select{
+border-radius:6px;
+padding:5px;
+}
+
+
   
-.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
-
-
 /*Chartds & cords however */
 /* KPI cards */
 .kpi-card:hover{
@@ -99,36 +128,18 @@ transition:0.25s;
 box-shadow:0 6px 15px rgba(0,0,0,0.15);
 }
 
-/*#userTable, #todoTable{width:100% !important;table-layout:fixed;}
-#userTable th, #userTable td, #todoTable th,#todoTable td{white-space:nowrap;}*/
-
-table.dataTable{
-width:100% !important;
-table-layout:fixed;
-}
-
-table.dataTable{
-  width:100% !important;
-}
-
-table.dataTable thead th,
-table.dataTable tbody td{
-  white-space:normal;
-  word-break:break-word;
-}
 
 .dataTables_scrollHeadInner,
 .dataTables_scrollHeadInner table{
   width:100% !important;
 }
 
-table.dataTable td,
-table.dataTable th{
-white-space:normal;
-word-break:break-word;
+.dataTables_wrapper{
+width:100%;
+overflow-x:auto;
 }
 
-.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table{width:100% !important;}
+
   /* KANBAN BOARD */
 
 .kanban-column{
@@ -2131,16 +2142,24 @@ let table = $(tableID).DataTable({
 
 pageLength:10,
 
-lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
 
-scrollY:"400px",
+scrollX:true,          // ⭐ important for zoom
+scrollY:"450px",
+
 scrollCollapse:true,
 
-paging:true,
-orderCellsTop:true,
+responsive:true,
 
 fixedHeader:true,
+
 autoWidth:false,
+
+orderCellsTop:true,
+
+paging:true,
+
+stateSave:true,
 
 dom:'Blfrtip',
 
@@ -2153,7 +2172,7 @@ buttons:[
 
 });
 
-/* column filter */
+/* column filters */
 
 $(tableID)
 .closest('.dataTables_wrapper')
@@ -2163,37 +2182,32 @@ $(tableID)
 $(this).off("keyup change").on("keyup change",function(){
 
 if(table.column(i).search()!==this.value){
-
 table.column(i).search(this.value).draw();
-
 }
 
 });
 
 });
 
+/* Auto adjust when window resize */
+
+$(window).on('resize', function () {
 table.columns.adjust();
+});
+
+setTimeout(()=>{
+table.columns.adjust();
+},300);
 
 return table;
 
 }
 
-  //Assigning role functions w.r.t the all buttons
-function applyRoleAccess(){
-
-let role = getLoggedUser().role;
-
-document.querySelectorAll("[data-role]").forEach(btn=>{
-
-let roles = btn.getAttribute("data-role").split(",");
-
-if(!roles.includes(role)){
-btn.style.display="none";
-}
-
+window.addEventListener('resize', function(){
+$($.fn.dataTable.tables(true))
+.DataTable()
+.columns.adjust();
 });
-
-}
  
 
   // Automatic Role Control (paste here at the very end)
