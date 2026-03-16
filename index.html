@@ -71,6 +71,14 @@ thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
 
   /* =====Table  PROFESSIONAL TABLE STYLE ===== */
+table.dataTable{
+width:100% !important;
+}
+
+.dataTables_scrollBody{
+border-bottom:1px solid #ddd;
+}
+  
 table.dataTable th,
 table.dataTable td{
 white-space:nowrap;
@@ -2141,68 +2149,6 @@ window.onload = () => {
   }
 };
   
-
-
-  
-function initCommonTable(tableID){
-
-if($.fn.DataTable.isDataTable(tableID)){
-$(tableID).DataTable().destroy();
-}
-
-let table = $(tableID).DataTable({
-
-pageLength:10,
-
-lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
-
-scrollX:true,        // horizontal scroll only
-scrollCollapse:true,
-
-responsive:false,
-
-autoWidth:false,
-
-orderCellsTop:true,
-
-paging:true,
-
-stateSave:true,
-
-fixedHeader:false,   // ⚠ IMPORTANT remove header cloning
-
-dom:'Blfrtip',
-
-buttons:[
-'colvis',
-{extend:'excel',title:'Report'},
-{extend:'csv',title:'Report'},
-{extend:'print'}
-]
-
-});
-
-/* column filters */
-
-$(tableID + " thead tr:eq(1) th input").each(function(i){
-
-$(this).off("keyup change").on("keyup change",function(){
-
-if(table.column(i).search()!==this.value){
-table.column(i).search(this.value).draw();
-}
-
-});
-
-});
-
-setTimeout(function(){
-table.columns.adjust();
-},200);
-
-return table;
-
-}
   
 /* ===== GLOBAL DATATABLE RESIZE FIX ===== */
 
