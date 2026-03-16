@@ -2149,7 +2149,11 @@ window.onload = () => {
   }
 };
 
-  function initCommonTable(tableID){
+
+
+  
+
+function initCommonTable(tableID){
 
 if($.fn.DataTable.isDataTable(tableID)){
 $(tableID).DataTable().destroy();
@@ -2161,8 +2165,8 @@ pageLength:10,
 
 lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
 
-scrollY:"450px",        // vertical scroll
-scrollX:true,           // horizontal scroll
+scrollY:"450px",
+scrollX:true,
 scrollCollapse:true,
 
 autoWidth:false,
@@ -2173,51 +2177,94 @@ orderCellsTop:true,
 paging:true,
 stateSave:true,
 
-fixedHeader:false,      // important when using scrollY
+fixedHeader:false,
+
+processing:true,
+deferRender:true,
 
 dom:'Blfrtip',
 
+columnDefs:[
+{
+targets:"_all",
+className:"dt-body-left"
+}
+],
+
 buttons:[
+
 'colvis',
-{extend:'excel',title:'Report'},
-{extend:'csv',title:'Report'},
-{extend:'print'}
+
+{
+extend:'excel',
+title:'Report'
+},
+
+{
+extend:'csv',
+title:'Report'
+},
+
+{
+extend:'print',
+title:'Report',
+customize:function(win){
+
+$(win.document.body).css('font-size','10pt');
+
+$(win.document.body).find('table')
+.addClass('compact')
+.css('font-size','10pt');
+
+$(win.document.body).find('td').css({
+'white-space':'normal',
+'word-break':'break-word'
+});
+
+$(win.document.body).find('th').css({
+'white-space':'normal'
+});
+
+}
+}
+
 ]
 
 });
 
-/* column filters */
 
-$(tableID + " thead tr:eq(1) th input").each(function(i){
+/* ===== COLUMN FILTER FIX ===== */
 
-$(this).off("keyup change").on("keyup change",function(){
+$(tableID + ' thead input').each(function(){
 
-if(table.column(i).search()!==this.value){
-table.column(i).search(this.value).draw();
+let colIndex = $(this).parent().index();
+
+$(this).off('keyup change').on('keyup change', function(){
+
+if(table.column(colIndex).search() !== this.value){
+
+table
+.column(colIndex)
+.search(this.value)
+.draw();
+
 }
 
 });
 
 });
 
-/* fix alignment after load */
+
+/* ===== ALIGNMENT FIX AFTER LOAD ===== */
 
 setTimeout(function(){
 table.columns.adjust().draw();
 },200);
 
+
 return table;
 
 }
-  
-/* ===== GLOBAL DATATABLE RESIZE FIX ===== */
-
-window.addEventListener('resize', function(){
-$($.fn.dataTable.tables(true))
-.DataTable()
-.columns.adjust();
-});
-
  
 
   // Automatic Role Control (paste here at the very end)
