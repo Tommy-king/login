@@ -71,7 +71,11 @@ thead input{width:100%;font-size:12px}
 .no-select{user-select:none}
 
   /* =====Table  PROFESSIONAL TABLE STYLE ===== */
-
+table.dataTable th,
+table.dataTable td{
+white-space:nowrap;
+}
+  
 .table-container{
 width:100%;
 overflow-x:auto;
@@ -127,19 +131,6 @@ transform:scale(1.02);
 transition:0.25s;
 box-shadow:0 6px 15px rgba(0,0,0,0.15);
 }
-
-
-.dataTables_scrollHeadInner,
-.dataTables_scrollHeadInner table{
-  width:100% !important;
-}
-
-.dataTables_wrapper{
-width:100%;
-overflow-x:auto;
-}
-
-  
 
   /* KANBAN BOARD */
 
@@ -2150,10 +2141,11 @@ window.onload = () => {
   }
 };
   
+
+
   
 function initCommonTable(tableID){
 
-// Destroy if already initialized
 if($.fn.DataTable.isDataTable(tableID)){
 $(tableID).DataTable().destroy();
 }
@@ -2164,21 +2156,20 @@ pageLength:10,
 
 lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
 
-scrollX:true,
-scrollY:450,
+scrollX:true,        // horizontal scroll only
 scrollCollapse:true,
 
-responsive:false,   // ⚠ important (fix header mismatch)
-fixedHeader:true,
+responsive:false,
 
 autoWidth:false,
-deferRender:true,
 
 orderCellsTop:true,
 
 paging:true,
 
 stateSave:true,
+
+fixedHeader:false,   // ⚠ IMPORTANT remove header cloning
 
 dom:'Blfrtip',
 
@@ -2191,12 +2182,9 @@ buttons:[
 
 });
 
-/* ===== COLUMN FILTERS ===== */
+/* column filters */
 
-$(tableID)
-.closest('.dataTables_wrapper')
-.find("thead tr:eq(1) th input")
-.each(function(i){
+$(tableID + " thead tr:eq(1) th input").each(function(i){
 
 $(this).off("keyup change").on("keyup change",function(){
 
@@ -2208,24 +2196,14 @@ table.column(i).search(this.value).draw();
 
 });
 
-/* ===== AUTO ADJUST ON WINDOW RESIZE ===== */
-
-$(window).on('resize', function () {
-table.columns.adjust();
-});
-
-/* ===== FORCE COLUMN ALIGNMENT AFTER LOAD ===== */
-
 setTimeout(function(){
-$.fn.dataTable
-.tables({visible:true, api:true})
-.columns.adjust();
-},300);
+table.columns.adjust();
+},200);
 
 return table;
 
 }
-
+  
 /* ===== GLOBAL DATATABLE RESIZE FIX ===== */
 
 window.addEventListener('resize', function(){
