@@ -1,4 +1,4 @@
-function createTable(tableID, options = {}){
+function initCommonTable(tableID, options = {}){
 
 if($.fn.DataTable.isDataTable(tableID)){
 $(tableID).DataTable().destroy();
