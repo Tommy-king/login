@@ -999,7 +999,7 @@ contentArea.innerHTML = `
 <button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
 </div>
 
-<table id="todoTable" class="display">
+<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
 
 <thead class="table-dark">
 
@@ -2149,11 +2149,11 @@ window.onload = () => {
     document.getElementById("dashboard").style.display = "none";
   }
 };
-
   
-//Table format Common Function
+  
 function initCommonTable(tableID){
 
+// Destroy if already initialized
 if($.fn.DataTable.isDataTable(tableID)){
 $(tableID).DataTable().destroy();
 }
@@ -2164,16 +2164,15 @@ pageLength:10,
 
 lengthMenu:[[10,25,50,100,-1],[10,25,50,100,"All"]],
 
-scrollX:true,          // ⭐ important for zoom
-scrollY:"450px",
-
+scrollX:true,
+scrollY:450,
 scrollCollapse:true,
 
-responsive:true,
-
+responsive:false,   // ⚠ important (fix header mismatch)
 fixedHeader:true,
 
 autoWidth:false,
+deferRender:true,
 
 orderCellsTop:true,
 
@@ -2192,7 +2191,7 @@ buttons:[
 
 });
 
-/* column filters */
+/* ===== COLUMN FILTERS ===== */
 
 $(tableID)
 .closest('.dataTables_wrapper')
@@ -2209,11 +2208,13 @@ table.column(i).search(this.value).draw();
 
 });
 
-/* Auto adjust when window resize */
+/* ===== AUTO ADJUST ON WINDOW RESIZE ===== */
 
 $(window).on('resize', function () {
 table.columns.adjust();
 });
+
+/* ===== FORCE COLUMN ALIGNMENT AFTER LOAD ===== */
 
 setTimeout(function(){
 $.fn.dataTable
@@ -2225,11 +2226,14 @@ return table;
 
 }
 
+/* ===== GLOBAL DATATABLE RESIZE FIX ===== */
+
 window.addEventListener('resize', function(){
 $($.fn.dataTable.tables(true))
 .DataTable()
 .columns.adjust();
 });
+
  
 
   // Automatic Role Control (paste here at the very end)
@@ -2287,26 +2291,26 @@ dateTime:new Date().toLocaleString()
 
 
 //AUDIT LOG VIEWER FUNCTION
-  async function openAuditLogs(){
+async function openAuditLogs(){
 
-let user=getLoggedUser();
+let user = getLoggedUser();
 
-if(user.role!=="Admin"){
+if(user.role !== "Admin"){
 Swal.fire("Access Denied","Admin only","error");
 return;
 }
 
 const snapshot = await get(ref(db,"auditLogs"));
 
-let rows="";
+let rows = "";
 
 if(snapshot.exists()){
 
-snapshot.forEach(child=>{
+snapshot.forEach(child => {
 
 let log = child.val();
 
-rows+=`
+rows += `
 <tr>
 <td>${log.username}</td>
 <td>${log.functionName}</td>
@@ -2320,14 +2324,16 @@ rows+=`
 
 }
 
-contentArea.innerHTML=`
+contentArea.innerHTML = `
 
 <div class="card">
 <div class="card-body">
 
 <h2>Audit Trail Logs</h2>
 
-<table id="auditTable" class="table table-bordered table-striped w-100">
+<div class="table-container">
+
+<table id="auditTable" class="table table-bordered table-striped table-hover w-100">
 
 <thead class="table-dark">
 
@@ -2356,53 +2362,18 @@ ${rows || "<tr><td colspan='5'>No Logs</td></tr>"}
 </table>
 
 </div>
+
+</div>
 </div>
 `;
 
-setTimeout(()=>{
+/* initialize table using common function */
 
-let table=$("#auditTable").DataTable({
+setTimeout(() => {
 
-pageLength:10,
+auditTable = initCommonTable('#auditTable');
 
-lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
-
-scrollY:"400px",
-
-scrollCollapse:true,
-autoWidth:false,
-responsive:false,
-paging:true,
-
-fixedHeader:true,
-
-dom:'Blfrtip',
-
-buttons:[
-'colvis',
-{extend:'excel',title:'Audit_Logs'},
-{extend:'csv',title:'Audit_Logs'},
-{extend:'print'}
-],
-
-order:[[4,"desc"]]
-
-});
-
-table.columns().every(function(index){
-
-$('input',table.table().header().rows[1].cells[index])
-.on('keyup change',function(){
-
-table.column(index)
-.search(this.value)
-.draw();
-
-});
-
-});
-
-},300);
+}, 200);
 
 }
   
