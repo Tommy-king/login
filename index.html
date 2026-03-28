@@ -138,6 +138,14 @@ cursor:grab;
 
 @media (max-width: 768px){
 
+    .row.g-0{
+    flex-direction:column;
+  }
+
+  #msgUserList{
+    height:150px;
+  }
+  
   /* Sidebar hidden by default */
   .sidebar{
     position: fixed;
@@ -179,7 +187,9 @@ cursor:grab;
   overflow-y:auto;
   height:100%;
 }
-
+#msgUserList div:hover{
+  background:#f5f5f5;
+}
 #msgBox{
   overflow-y:auto;
   height:100%;
@@ -2307,36 +2317,58 @@ table.column(index)
 msgUser = getLoggedUser().username;
 contentArea.innerHTML = `
 
-<div class="card">
-<div class="card-body">
+<div class="card p-0" style="height:calc(100vh - 80px);">
 
-<div class="row" style="height:calc(100vh - 150px)">
+<div class="row g-0 h-100">
 
 <!-- USER LIST -->
-<div class="col-md-4 border-end" id="msgUserList" style="overflow-y:auto"></div>
+<div class="col-md-4 border-end d-flex flex-column">
+
+<div style="padding:10px;font-weight:bold;background:#f0f2f5">
+Chats
+</div>
+
+<div id="msgUserList" style="flex:1;overflow-y:auto"></div>
+
+</div>
 
 <!-- CHAT AREA -->
 <div class="col-md-8 d-flex flex-column">
 
-<div id="msgHeader" style="font-weight:bold;padding:10px;border-bottom:1px solid #ccc">
+<!-- HEADER -->
+<div id="msgHeader" style="
+padding:10px;
+background:#f0f2f5;
+border-bottom:1px solid #ccc;
+font-weight:bold;
+">
 Select user
 </div>
 
-<div id="msgTyping" style="color:gray;font-size:12px;padding-left:10px"></div>
+<!-- MESSAGES -->
+<div id="msgBox" style="
+flex:1;
+overflow-y:auto;
+padding:10px;
+background:#e5ddd5;
+"></div>
 
-<div id="msgBox" style="flex:1;overflow-y:auto;background:#ece5dd;padding:10px"></div>
-
-<div class="d-flex mt-2">
+<!-- INPUT -->
+<div style="
+padding:10px;
+background:#f0f2f5;
+display:flex;
+gap:5px;
+">
 
 <input type="file" id="msgFile" hidden>
 
-<button class="btn btn-light" onclick="document.getElementById('msgFile').click()">📎</button>
+<button class="btn btn-light"
+onclick="document.getElementById('msgFile').click()">📎</button>
 
 <input id="msgInput" class="form-control" placeholder="Type message">
 
-<button class="btn btn-primary" onclick="sendMsg()">Send</button>
-
-</div>
+<button class="btn btn-success" onclick="sendMsg()">➤</button>
 
 </div>
 
@@ -2534,41 +2566,35 @@ html += `
 <div style="
 display:flex;
 justify-content:${isMe ? 'flex-end' : 'flex-start'};
-margin-bottom:10px;
+margin-bottom:8px;
 ">
 
 <div style="
-display:inline-block;
-padding:8px;
-border-radius:10px;
-max-width:65%;
 background:${isMe ? '#dcf8c6' : '#fff'};
-box-shadow:0 1px 3px rgba(0,0,0,0.2);
-word-break:break-word;
+padding:8px 10px;
+border-radius:10px;
+max-width:70%;
+box-shadow:0 1px 2px rgba(0,0,0,0.2);
+position:relative;
 ">
 
 ${m.text || ""}
 
-${m.image ? `<br>
-<img src="${m.image}" width="120" 
-style="cursor:pointer;border-radius:6px"
+${m.image ? `
+<br>
+<img src="${m.image}" width="150"
+style="border-radius:6px;cursor:pointer"
 onclick="openImage('${m.image}')">
 ` : ""}
 
-<br>
-<small style="
+<div style="
 font-size:10px;
-display:flex;
-justify-content:flex-end;
-align-items:center;
-gap:5px;
+text-align:right;
+margin-top:3px;
+color:#555;
 ">
-
-${m.time}
-
-${isMe ? getTick(m.status) : ""}
-
-</small>
+${m.time} ${isMe ? getTick(m.status) : ""}
+</div>
 
 </div>
 </div>
