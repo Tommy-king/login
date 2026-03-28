@@ -2241,7 +2241,7 @@ table.column(index)
 
 
   function openMessagePage(){
-
+msgUser = getLoggedUser().username;
 contentArea.innerHTML = `
 
 <div class="card">
@@ -2287,8 +2287,8 @@ loadMsgUsers();
 }
 
 
-  let msgReceiver = "";
-let msgUser = getLoggedUser().username;
+let msgReceiver = "";
+let msgUser = "";
 
 // LOAD USERS
 async function loadMsgUsers(){
@@ -2325,13 +2325,22 @@ listenOnline();
 // SEND MESSAGE
 function sendMsg(){
 
-let text = document.getElementById("msgInput").value;
+if(!msgReceiver){
+Swal.fire("Select User","Please select a user to chat","warning");
+return;
+}
+
+let text = document.getElementById("msgInput").value.trim();
 let file = document.getElementById("msgFile").files[0];
+
+if(!text && !file){
+Swal.fire("Empty Message","Type message or attach file","warning");
+return;
+}
 
 let id = Date.now();
 
 if(file){
-
 let reader = new FileReader();
 
 reader.onload = function(e){
