@@ -191,14 +191,6 @@ cursor:grab;
 </head>
 <body>
 
-  document.querySelectorAll(".sidebar button").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    if(window.innerWidth < 768){
-      document.querySelector(".sidebar").classList.remove("active");
-    }
-  });
-});
-
       
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
@@ -2091,6 +2083,15 @@ $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
   // ----------- AUTO LOGIN if stored -----------
 
 window.onload = () => {
+
+  document.querySelectorAll(".sidebar button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    if(window.innerWidth < 768){
+      document.querySelector(".sidebar").classList.remove("active");
+    }
+  });
+});
+  
   let user = JSON.parse(sessionStorage.getItem("loginUser"));
 
   if (user && user.username) {
@@ -2548,7 +2549,11 @@ word-break:break-word;
 
 ${m.text || ""}
 
-${m.image ? `<br><img src="${m.image}" width="120">` : ""}
+${m.image ? `<br>
+<img src="${m.image}" width="120" 
+style="cursor:pointer;border-radius:6px"
+onclick="openImage('${m.image}')">
+` : ""}
 
 <br>
 <small style="
@@ -2714,8 +2719,51 @@ listenOnline();
   function toggleSidebar(){
   document.querySelector(".sidebar").classList.toggle("active");
 }
+function openImage(src){
+  document.getElementById("imgPreview").style.display = "flex";
+  document.getElementById("previewImg").src = src;
+}
+
+function closeImage(){
+  document.getElementById("imgPreview").style.display = "none";
+}
+
+  
 </script>
 
+
+
+  
+<div id="imgPreview" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+z-index:2000;
+justify-content:center;
+align-items:center;
+">
+
+<img id="previewImg" style="
+max-width:90%;
+max-height:90%;
+border-radius:8px;
+">
+
+<span onclick="closeImage()" style="
+position:absolute;
+top:20px;
+right:30px;
+color:white;
+font-size:30px;
+cursor:pointer;
+font-weight:bold;
+">✖</span>
+
+</div>
 </body>
 
 </html>
