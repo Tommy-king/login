@@ -134,11 +134,72 @@ border-radius:6px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 cursor:grab;
 }
-  
+  /* ================= MOBILE RESPONSIVE ================= */
+
+@media (max-width: 768px){
+
+  /* Sidebar hidden by default */
+  .sidebar{
+    position: fixed;
+    left: -220px;
+    transition: 0.3s;
+    z-index: 1050;
+  }
+
+  .sidebar.active{
+    left: 0;
+  }
+
+  /* Content full width */
+  .content{
+    margin-left: 0 !important;
+  }
+
+  /* Topbar */
+  .topbar{
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px;
+  }
+
+  /* Ribbon scroll (horizontal) */
+  .ribbon{
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .ribbon button{
+    display: inline-block;
+    margin: 3px;
+  }
+
+  /* Message layout stack */
+#msgUserList{
+  overflow-y:auto;
+  height:100%;
+}
+
+#msgBox{
+  overflow-y:auto;
+  height:100%;
+  scroll-behavior:smooth;
+}
+
+}
 </style>
 </head>
 <body>
 
+  document.querySelectorAll(".sidebar button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    if(window.innerWidth < 768){
+      document.querySelector(".sidebar").classList.remove("active");
+    }
+  });
+});
+
+      
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
@@ -170,7 +231,7 @@ cursor:grab;
 <!-- DASHBOARD -->
 <div id="dashboard">
   <div class="topbar">
-    <div class="logo"><i class="fa fa-chart-line"></i> Admin System</div>
+      <div class="logo"><i class="fa fa-bars" onclick="toggleSidebar()" style="cursor:pointer"></i>Admin System</div>
     <div class="ribbon">
 <!-- Top Ribbon -->
         <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
@@ -2248,7 +2309,7 @@ contentArea.innerHTML = `
 <div class="card">
 <div class="card-body">
 
-<div class="row" style="height:70vh">
+<div class="row" style="height:calc(100vh - 150px)">
 
 <!-- USER LIST -->
 <div class="col-md-4 border-end" id="msgUserList" style="overflow-y:auto"></div>
@@ -2648,8 +2709,11 @@ event.currentTarget.style.background = "#f1f5f9";
 listenMsg();
 listenTyping();
 listenOnline();
-
 } 
+
+  function toggleSidebar(){
+  document.querySelector(".sidebar").classList.toggle("active");
+}
 </script>
 
 </body>
