@@ -399,6 +399,7 @@ let password = document.getElementById("loginPass").value.trim();
     // Update UI access for buttons based on data-role
     updateUIAccess();
     listenNotifications();
+    listenMessageNotifications();
     // Load home page
     home();
 
@@ -2284,6 +2285,7 @@ Select user
 `;
 
 loadMsgUsers();
+    listenUserList()
 }
 
 
@@ -2294,34 +2296,94 @@ let msgUser = "";
 async function loadMsgUsers(){
 
 let users = await getUsers();
+let html = "";
 
-let html="";
+// Get all messages once
+const snap = await get(ref(db,"messages"));
+let messages = snap.exists() ? snap.val() : {};
 
 users.forEach(u=>{
+
 if(u.username !== msgUser){
-html += `<div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee"
-onclick="selectMsgUser('${u.username}')">
-${u.username}
-</div>`;
+
+let unread = 0;
+let lastMsg = "";
+let lastTime = "";
+
+// Loop messages
+Object.values(messages).forEach(m=>{
+
+// ✅ Count unread messages
+if(
+m.sender === u.username &&
+m.receiver === msgUser &&
+m.status !== "seen"
+){
+unread++;
 }
+
+// ✅ Get last message between both users
+if(
+(m.sender === msgUser && m.receiver === u.username) ||
+(m.sender === u.username && m.receiver === msgUser)
+){
+lastMsg = m.text || (m.image ? "📎 Image" : "");
+lastTime = m.time;
+}
+
+});
+
+// UI
+html += `
+<div style="
+padding:10px;
+cursor:pointer;
+border-bottom:1px solid #eee;
+display:flex;
+justify-content:space-between;
+align-items:center;
+"
+onclick="selectMsgUser('${u.username}')">
+
+<div>
+<div style="font-weight:bold">${u.username}</div>
+<div style="font-size:12px;color:gray">
+${lastMsg || ""}
+</div>
+</div>
+
+<div style="text-align:right">
+
+<div style="font-size:10px;color:gray">
+${lastTime || ""}
+</div>
+
+${unread > 0 ? `
+<div style="
+background:green;
+color:white;
+border-radius:50%;
+padding:4px 8px;
+font-size:12px;
+margin-top:3px;
+display:inline-block;
+">
+${unread}
+</div>
+` : ""}
+
+</div>
+
+</div>
+`;
+
+}
+
 });
 
 document.getElementById("msgUserList").innerHTML = html;
 }
-
-// SELECT USER
-function selectMsgUser(user){
-
-msgReceiver = user;
-
-document.getElementById("msgHeader").innerText = user;
-
-listenMsg();
-listenTyping();
-listenOnline();
-
-}
-
+  
 // SEND MESSAGE
 function sendMsg(){
 
@@ -2371,40 +2433,77 @@ status:"sent"
 
 }
 
-// LISTEN
 function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
 
-let html="";
+let html = "";
 
 snap.forEach(child=>{
 
 let m = child.val();
 let id = child.key;
 
+// Only show selected chat
 if(
 (m.sender===msgUser && m.receiver===msgReceiver) ||
 (m.sender===msgReceiver && m.receiver===msgUser)
 ){
 
-if(m.receiver===msgUser && m.status==="sent"){
+// ✅ FIXED STATUS FLOW (no multiple writes spam)
+if(m.receiver === msgUser){
+
+if(m.status === "sent"){
 update(ref(db,"messages/"+id),{status:"delivered"});
 }
 
-if(m.receiver===msgUser){
+if(m.status !== "seen"){
+setTimeout(()=>{
 update(ref(db,"messages/"+id),{status:"seen"});
+},300);
 }
 
-let cls = m.sender===msgUser ? "text-end":"text-start";
+}
 
+let isMe = m.sender === msgUser;
+
+// ✅ WhatsApp style alignment
 html += `
-<div style="margin-bottom:10px">
-<div style="display:inline-block;padding:8px;border-radius:10px;
-background:${m.sender===msgUser?'#dcf8c6':'#fff'}">
+<div style="
+display:flex;
+justify-content:${isMe ? 'flex-end' : 'flex-start'};
+margin-bottom:10px;
+">
+
+<div style="
+display:inline-block;
+padding:8px;
+border-radius:10px;
+max-width:65%;
+background:${isMe ? '#dcf8c6' : '#fff'};
+box-shadow:0 1px 3px rgba(0,0,0,0.2);
+word-break:break-word;
+">
+
 ${m.text || ""}
-${m.image ? `<br><img src="${m.image}" width="120">`:""}
-<br><small>${m.time}</small>
+
+${m.image ? `<br><img src="${m.image}" width="120">` : ""}
+
+<br>
+<small style="
+font-size:10px;
+display:flex;
+justify-content:flex-end;
+align-items:center;
+gap:5px;
+">
+
+${m.time}
+
+${isMe ? getTick(m.status) : ""}
+
+</small>
+
 </div>
 </div>
 `;
@@ -2415,32 +2514,14 @@ ${m.image ? `<br><img src="${m.image}" width="120">`:""}
 
 document.getElementById("msgBox").innerHTML = html;
 
+// ✅ Auto scroll
 let box = document.getElementById("msgBox");
 box.scrollTop = box.scrollHeight;
 
 });
-}
-
-// TYPING
-document.addEventListener("input", e=>{
-
-if(e.target.id==="msgInput"){
-
-set(ref(db,"typing/"+msgReceiver),{
-from:msgUser,
-status:true
-});
-
-setTimeout(()=>{
-set(ref(db,"typing/"+msgReceiver),{
-from:msgUser,
-status:false
-});
-},1000);
 
 }
-
-});
+  
 
 // LISTEN TYPING
 function listenTyping(){
@@ -2513,7 +2594,62 @@ reader.readAsDataURL(file);
 }
 
 });
-  
+
+  function listenMessageNotifications(){
+
+const user = getLoggedUser().username;
+
+onValue(ref(db,"messages"), snap=>{
+
+let count = 0;
+
+snap.forEach(child=>{
+let m = child.val();
+
+if(m.receiver === user && m.status !== "seen"){
+count++;
+}
+});
+
+document.getElementById("notifyCount").innerText = count;
+
+});
+
+}
+
+  function getTick(status){
+
+if(status === "sent") return " ✓";
+if(status === "delivered") return " ✓✓";
+if(status === "seen") return " <span style='color:blue'>✓✓</span>";
+
+return "";
+}
+
+function listenUserList(){
+
+onValue(ref(db,"messages"), ()=>{
+loadMsgUsers();
+});
+
+}
+ function selectMsgUser(user){
+
+msgReceiver = user;
+
+document.getElementById("msgHeader").innerText = user;
+
+// Optional: highlight selected user
+document.querySelectorAll("#msgUserList > div").forEach(d=>{
+d.style.background = "";
+});
+event.currentTarget.style.background = "#f1f5f9";
+
+listenMsg();
+listenTyping();
+listenOnline();
+
+} 
 </script>
 
 </body>
