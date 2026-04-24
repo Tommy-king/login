@@ -2313,12 +2313,13 @@ table.column(index)
 
 
 
-  function openMessagePage(){
+function openMessagePage(){
+
 msgUser = getLoggedUser().username;
+
 contentArea.innerHTML = `
 
 <div class="card p-0" style="height:calc(100vh - 80px);">
-
 <div class="row g-0 h-100">
 
 <!-- USER LIST -->
@@ -2335,64 +2336,62 @@ Chats
 <!-- CHAT AREA -->
 <div class="col-md-8 d-flex flex-column">
 
-<!-- HEADER -->
-<div id="msgHeader" style="
-padding:10px;
-background:#f0f2f5;
-border-bottom:1px solid #ccc;
-font-weight:bold;
-">
+<div id="msgHeader" style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;font-weight:bold;">
 Select user
 </div>
 
-<!-- MESSAGES -->
-<div id="msgBox" style="
-flex:1;
-overflow-y:auto;
-padding:10px;
-background:#e5ddd5;
-"></div>
+<div id="msgTyping" style="font-size:12px;color:gray;padding-left:10px;height:18px;"></div>
+
+<div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;scroll-behavior:smooth;"></div>
 
 <!-- INPUT -->
-<div style="
-padding:10px;
-background:#f0f2f5;
-display:flex;
-gap:5px;
-">
+<div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;align-items:flex-end;">
 
 <input type="file" id="msgFile" hidden>
 
-<button class="btn btn-light"
-onclick="document.getElementById('msgFile').click()">📎</button>
+<button onclick="document.getElementById('msgFile').click()">📎</button>
 
-<input id="msgInput" class="form-control" placeholder="Type message">
+<textarea id="msgInput" placeholder="Type message"
+style="flex:1;resize:none;max-height:100px;overflow-y:auto"></textarea>
 
-<button class="btn btn-success" onclick="sendMsg()">➤</button>
-
-</div>
+<button onclick="sendMsg()">➤</button>
 
 </div>
 
+</div>
 </div>
 </div>
 `;
 
 loadMsgUsers();
-    listenUserList()
+listenUserList();
+initTextarea();
+initTyping();
 }
 
 
 let msgReceiver = "";
 let msgUser = "";
 
+function getISTTime(){
+let d = new Date();
+return d.toLocaleString("en-GB", {
+timeZone: "Asia/Kolkata",
+day: "2-digit",
+month: "2-digit",
+year: "numeric",
+hour: "2-digit",
+minute: "2-digit",
+second: "2-digit"
+}).replace(",", "");
+}
+  
 // LOAD USERS
 async function loadMsgUsers(){
 
 let users = await getUsers();
 let html = "";
 
-// Get all messages once
 const snap = await get(ref(db,"messages"));
 let messages = snap.exists() ? snap.val() : {};
 
@@ -2404,68 +2403,34 @@ let unread = 0;
 let lastMsg = "";
 let lastTime = "";
 
-// Loop messages
 Object.values(messages).forEach(m=>{
 
-// ✅ Count unread messages
-if(
-m.sender === u.username &&
-m.receiver === msgUser &&
-m.status !== "seen"
-){
+if(m.sender === u.username && m.receiver === msgUser && m.status !== "seen"){
 unread++;
 }
 
-// ✅ Get last message between both users
 if(
 (m.sender === msgUser && m.receiver === u.username) ||
 (m.sender === u.username && m.receiver === msgUser)
 ){
-lastMsg = m.text || (m.image ? "📎 Image" : "");
+lastMsg = m.text || (m.file ? "📎 File" : "");
 lastTime = m.time;
 }
 
 });
 
-// UI
 html += `
-<div style="
-padding:10px;
-cursor:pointer;
-border-bottom:1px solid #eee;
-display:flex;
-justify-content:space-between;
-align-items:center;
-"
-onclick="selectMsgUser('${u.username}')">
+<div onclick="selectMsgUser('${u.username}')"
+style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between">
 
 <div>
-<div style="font-weight:bold">${u.username}</div>
-<div style="font-size:12px;color:gray">
-${lastMsg || ""}
-</div>
+<b>${u.username}</b><br>
+<small>${lastMsg}</small>
 </div>
 
 <div style="text-align:right">
-
-<div style="font-size:10px;color:gray">
-${lastTime || ""}
-</div>
-
-${unread > 0 ? `
-<div style="
-background:green;
-color:white;
-border-radius:50%;
-padding:4px 8px;
-font-size:12px;
-margin-top:3px;
-display:inline-block;
-">
-${unread}
-</div>
-` : ""}
-
+<small>${lastTime}</small><br>
+${unread>0 ? `<span style="background:green;color:white;border-radius:50%;padding:4px 8px">${unread}</span>` : ""}
 </div>
 
 </div>
@@ -2481,47 +2446,41 @@ document.getElementById("msgUserList").innerHTML = html;
 // SEND MESSAGE
 function sendMsg(){
 
-if(!msgReceiver){
-Swal.fire("Select User","Please select a user to chat","warning");
-return;
-}
+if(!msgReceiver) return alert("Select user");
 
-let text = document.getElementById("msgInput").value.trim();
-let file = document.getElementById("msgFile").files[0];
+let text = msgInput.value.trim();
+let file = msgFile.files[0];
 
-if(!text && !file){
-Swal.fire("Empty Message","Type message or attach file","warning");
-return;
-}
+if(!text && !file) return alert("Empty");
 
 let id = Date.now();
 
 if(file){
 let reader = new FileReader();
-
-reader.onload = function(e){
-saveMsg(id,text,e.target.result);
+reader.onload = e=>{
+saveMsg(id,text,e.target.result,file.name,file.type);
 };
-
 reader.readAsDataURL(file);
-
 }else{
-saveMsg(id,text,"");
+saveMsg(id,text,"","","");
 }
 
-document.getElementById("msgInput").value="";
-document.getElementById("msgFile").value="";
+msgInput.value="";
+msgFile.value="";
 }
+  
 
 // SAVE
-function saveMsg(id,text,image){
+function saveMsg(id,text,file,fileName,fileType){
 
 set(ref(db,"messages/"+id),{
 sender:msgUser,
 receiver:msgReceiver,
 text:text,
-image:image,
-time:new Date().toLocaleTimeString(),
+file:file || "",
+fileName:fileName || "",
+fileType:fileType || "",
+time:getISTTime(),
 status:"sent"
 });
 
@@ -2531,125 +2490,126 @@ function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
 
+let msgs = [];
+
+snap.forEach(c=>{
+msgs.push({id:c.key,...c.val()});
+});
+
+msgs.sort((a,b)=>a.id - b.id);
+
 let html = "";
 
-snap.forEach(child=>{
+msgs.forEach(m=>{
 
-let m = child.val();
-let id = child.key;
-
-// Only show selected chat
 if(
 (m.sender===msgUser && m.receiver===msgReceiver) ||
 (m.sender===msgReceiver && m.receiver===msgUser)
 ){
 
-// ✅ FIXED STATUS FLOW (no multiple writes spam)
-if(m.receiver === msgUser){
-
-if(m.status === "sent"){
-update(ref(db,"messages/"+id),{status:"delivered"});
-}
-
-if(m.status !== "seen"){
-setTimeout(()=>{
-update(ref(db,"messages/"+id),{status:"seen"});
-},300);
-}
-
-}
-
 let isMe = m.sender === msgUser;
 
-// ✅ WhatsApp style alignment
-html += `
-<div style="
-display:flex;
-justify-content:${isMe ? 'flex-end' : 'flex-start'};
-margin-bottom:8px;
-">
+// STATUS UPDATE
+if(m.receiver === msgUser){
+if(m.status==="sent") update(ref(db,"messages/"+m.id),{status:"delivered"});
+if(m.status!=="seen"){
+setTimeout(()=>{
+update(ref(db,"messages/"+m.id),{status:"seen"});
+},300);
+}
+}
 
-<div style="
-background:${isMe ? '#dcf8c6' : '#fff'};
-padding:8px 10px;
-border-radius:10px;
-max-width:70%;
-box-shadow:0 1px 2px rgba(0,0,0,0.2);
-position:relative;
-">
+html += `
+<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin:5px 0;">
+
+<div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
 
 ${m.text || ""}
 
-${m.image ? `
-<br>
-<img src="${m.image}" width="150"
-style="border-radius:6px;cursor:pointer"
-onclick="openImage('${m.image}')">
-` : ""}
+${m.file ? (
+m.fileType.startsWith("image")
+? `<br><img src="${m.file}" width="150">`
+: `<br><a href="${m.file}" download="${m.fileName}">📄 ${m.fileName}</a>`
+) : ""}
 
-<div style="
-font-size:10px;
-text-align:right;
-margin-top:3px;
-color:#555;
-">
-${m.time} ${isMe ? getTick(m.status) : ""}
+<div style="font-size:10px;text-align:right">
+${m.time} ${isMe?getTick(m.status):""}
 </div>
 
 </div>
 </div>
 `;
-
 }
 
 });
 
-document.getElementById("msgBox").innerHTML = html;
+msgBox.innerHTML = html;
 
-// ✅ Auto scroll
-let box = document.getElementById("msgBox");
-box.scrollTop = box.scrollHeight;
+setTimeout(()=>{
+msgBox.scrollTop = msgBox.scrollHeight;
+},100);
 
 });
-
 }
   
+function selectMsgUser(user){
 
-// LISTEN TYPING
+msgReceiver = user;
+msgHeader.innerText = user;
+
+listenMsg();
+listenTyping();
+listenOnline();
+}
+
+  
+function initTyping(){
+
+msgInput.addEventListener("input", ()=>{
+
+set(ref(db,"typing/"+msgReceiver),{
+from:msgUser,
+status:true
+});
+
+setTimeout(()=>{
+set(ref(db,"typing/"+msgReceiver),{status:false});
+},1000);
+
+});
+}
+
 function listenTyping(){
 
 onValue(ref(db,"typing/"+msgUser), snap=>{
 
 let d = snap.val();
 
-if(d && d.status){
-document.getElementById("msgTyping").innerText = d.from+" typing...";
-}else{
-document.getElementById("msgTyping").innerText="";
-}
+msgTyping.innerText = (d && d.status) ? d.from+" typing..." : "";
 
 });
-
 }
 
-// ONLINE STATUS
 function listenOnline(){
 
 onValue(ref(db,"status/"+msgReceiver), snap=>{
 
 let s = snap.val();
 
-if(s?.online){
-document.getElementById("msgHeader").innerText = msgReceiver+" (Online)";
-}else{
-document.getElementById("msgHeader").innerText =
-msgReceiver+" (Last seen: "+s?.lastSeen+")";
-}
+msgHeader.innerText = s?.online
+? msgReceiver+" (Online)"
+: msgReceiver+" (Last seen: "+s?.lastSeen+")";
 
+});
+}
+function initTextarea(){
+
+msgInput.addEventListener("input", ()=>{
+msgInput.style.height = "auto";
+msgInput.style.height = msgInput.scrollHeight + "px";
 });
 
 }
-
 // SET ONLINE
 window.addEventListener("load",()=>{
 set(ref(db,"status/"+msgUser),{online:true});
@@ -2659,7 +2619,7 @@ set(ref(db,"status/"+msgUser),{online:true});
 window.addEventListener("beforeunload",()=>{
 set(ref(db,"status/"+msgUser),{
 online:false,
-lastSeen:new Date().toLocaleString()
+lastSeen:getISTTime()
 });
 });
 
@@ -2709,23 +2669,18 @@ document.getElementById("notifyCount").innerText = count;
 
 }
 
-  function getTick(status){
-
-if(status === "sent") return " ✓";
-if(status === "delivered") return " ✓✓";
-if(status === "seen") return " <span style='color:blue'>✓✓</span>";
-
+function getTick(status){
+if(status==="sent") return "✓";
+if(status==="delivered") return "✓✓";
+if(status==="seen") return "<span style='color:blue'>✓✓</span>";
 return "";
 }
 
 function listenUserList(){
-
-onValue(ref(db,"messages"), ()=>{
-loadMsgUsers();
-});
-
+onValue(ref(db,"messages"), ()=> loadMsgUsers());
 }
- function selectMsgUser(user){
+  
+function selectMsgUser(user){
 
 msgReceiver = user;
 
