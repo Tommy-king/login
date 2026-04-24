@@ -412,7 +412,8 @@ function updateUIAccess() {
 }
 // ----------- LOGIN / LOGOUT ------------
 
-async function login() {
+window.login = async function() {
+
  if(!window.db){
 Swal.fire("Error","Firebase not initialized yet. Please refresh.","error");
 return;
@@ -421,56 +422,53 @@ return;
 let username = document.getElementById("loginUser").value.trim();
 let password = document.getElementById("loginPass").value.trim();
 
-  try {
-    const snapshot = await get(ref(db, "users"));
+try {
+const snapshot = await get(ref(db, "users"));
 
-    if (!snapshot.exists()) {
-      Swal.fire("Error", "No users found in database", "error");
-      return;
-    }
+if (!snapshot.exists()) {
+Swal.fire("Error", "No users found in database", "error");
+return;
+}
 
-    let users = snapshot.val();
-    let foundUser = null;
+let users = snapshot.val();
+let foundUser = null;
 
-    // Find the user
-    Object.values(users).forEach(user => {
-      if (user.username === username && user.password === password) {
-        foundUser = user;
-      }
-    });
+Object.values(users).forEach(user => {
+if (user.username === username && user.password === password) {
+foundUser = user;
+}
+});
 
-    if (!foundUser) {
-      Swal.fire("Login Failed", "Invalid username or password", "error");
-      await writeAuditLog("Login","User Login Failed ("+username+")");
-      return;
-    }
+if (!foundUser) {
+Swal.fire("Login Failed", "Invalid username or password", "error");
+await writeAuditLog("Login","User Login Failed ("+username+")");
+return;
+}
 
-    if (foundUser.status !== "Active") {
-      Swal.fire("Access Denied", "User inactive", "error");
-      return;
-    }
+if (foundUser.status !== "Active") {
+Swal.fire("Access Denied", "User inactive", "error");
+return;
+}
 
-    // Save logged-in user
-    localStorage.setItem("loginUser", JSON.stringify(foundUser));
+localStorage.setItem("loginUser", JSON.stringify(foundUser));
 
-    // Show dashboard and hide login
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    document.getElementById("displayUser").innerHTML = `${foundUser.username} (${foundUser.role})`;
+document.getElementById("loginPage").style.display = "none";
+document.getElementById("dashboard").style.display = "block";
+document.getElementById("displayUser").innerHTML = `${foundUser.username} (${foundUser.role})`;
 
-    await writeAuditLog("Login","User Login (Success)");
-    // Update UI access for buttons based on data-role
-    updateUIAccess();
-    listenNotifications();
-    listenMessageNotifications();
-    // Load home page
-    home();
+await writeAuditLog("Login","User Login (Success)");
 
-  } catch (error) {
-    console.error(error);
-    Swal.fire("Error", error.message, "error");
-    console.error(error);
-  }
+updateUIAccess();
+listenNotifications();
+listenMessageNotifications();
+
+home();
+
+} catch (error) {
+console.error(error);
+Swal.fire("Error", error.message, "error");
+}
+
 }
   
 async function logout(){
