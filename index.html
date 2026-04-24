@@ -195,9 +195,6 @@ cursor:grab;
   height:100%;
   scroll-behavior:smooth;
 }
-  #msgBox {
-scroll-behavior: smooth;
-}
 
 }
 </style>
@@ -207,30 +204,21 @@ scroll-behavior: smooth;
       
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { 
-  getDatabase, ref, set, get, child, update, remove, onValue, serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { firebaseConfig } from "./firebase-config.js";
 
-import { firebaseConfig } from "./firebase-config.js";
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// ✅ expose AFTER init
-window.db = db;
-window.ref = ref;
-window.set = set;
-window.get = get;
-window.child = child;
-window.update = update;
-window.remove = remove;
-window.onValue = onValue;
-window.serverTimestamp = serverTimestamp;
-
-// ✅ notify app Firebase is ready
-window.dispatchEvent(new Event("firebase-ready"));
-
+  window.db = db;
+  window.ref = ref;
+  window.set = set;
+  window.get = get;
+  window.child = child;
+  window.update = update;
+  window.remove = remove;
+  window.onValue = onValue;
 </script>
 
 <!-- LOGIN PAGE -->
@@ -2331,48 +2319,47 @@ msgUser = getLoggedUser().username;
 
 contentArea.innerHTML = `
 
-<div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
-  <div class="row g-0 h-100">
+<div class="card p-0" style="height:calc(100vh - 80px);">
+<div class="row g-0 h-100">
 
-    <!-- USER LIST -->
-    <div class="col-md-4 border-end d-flex flex-column" style="height:100%;">
-      
-      <div style="padding:10px;font-weight:bold;background:#f0f2f5;flex-shrink:0;">
-        Chats
-      </div>
+<!-- USER LIST -->
+<div class="col-md-4 border-end d-flex flex-column">
 
-      <div id="msgUserList" style="flex:1; overflow-y:auto;"></div>
+<div style="padding:10px;font-weight:bold;background:#f0f2f5">
+Chats
+</div>
 
-    </div>
+<div id="msgUserList" style="flex:1;overflow-y:auto"></div>
 
-    <!-- CHAT AREA -->
-    <div class="col-md-8 d-flex flex-column" style="height:100%;">
+</div>
 
-      <div id="msgHeader" style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;flex-shrink:0;">
-        Select user
-      </div>
+<!-- CHAT AREA -->
+<div class="col-md-8 d-flex flex-column">
 
-      <div id="msgTyping" style="height:18px;padding-left:10px;font-size:12px;color:gray;flex-shrink:0;"></div>
+<div id="msgHeader" style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;font-weight:bold;">
+Select user
+</div>
 
-      <div id="msgBox" style="flex:1; overflow-y:auto; padding:10px; background:#e5ddd5; scroll-behavior:smooth;"></div>
+<div id="msgTyping" style="font-size:12px;color:gray;padding-left:10px;height:18px;"></div>
 
-      <!-- INPUT -->
-      <div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;align-items:flex-end;flex-shrink:0;">
+<div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;scroll-behavior:smooth;"></div>
 
-        <input type="file" id="msgFile" hidden>
+<!-- INPUT -->
+<div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;align-items:flex-end;">
 
-        <button onclick="msgFile.click()">📎</button>
+<input type="file" id="msgFile" hidden>
 
-        <textarea id="msgInput" placeholder="Type message"
-        style="flex:1;resize:none;max-height:100px;overflow-y:auto"></textarea>
+<button onclick="document.getElementById('msgFile').click()">📎</button>
 
-        <button onclick="sendMsg()">➤</button>
+<textarea id="msgInput" placeholder="Type message"
+style="flex:1;resize:none;max-height:100px;overflow-y:auto"></textarea>
 
-      </div>
+<button onclick="sendMsg()">➤</button>
 
-    </div>
+</div>
 
-  </div>
+</div>
+</div>
 </div>
 `;
 
@@ -2386,9 +2373,8 @@ initTyping();
 let msgReceiver = "";
 let msgUser = "";
 
-
-function formatIST(ts){
-let d = new Date(ts);
+function getISTTime(){
+let d = new Date();
 return d.toLocaleString("en-GB", {
 timeZone: "Asia/Kolkata",
 day: "2-digit",
@@ -2494,19 +2480,12 @@ text:text,
 file:file || "",
 fileName:fileName || "",
 fileType:fileType || "",
-
-// ✅ REAL SERVER TIME
-ts: Date.now(), // keep this for sorting
-serverTime: serverTimestamp(), // optional
-
 time:getISTTime(),
-
 status:"sent"
 });
 
 }
 
-  
 function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
@@ -2549,7 +2528,7 @@ ${m.text || ""}
 
 ${m.file ? (
 m.fileType.startsWith("image")
-? `<br><img src="${m.file}" width="150" style="border-radius:6px">`
+? `<br><img src="${m.file}" width="150">`
 : `<br><a href="${m.file}" download="${m.fileName}">📄 ${m.fileName}</a>`
 ) : ""}
 
@@ -2566,37 +2545,21 @@ ${m.time} ${isMe?getTick(m.status):""}
 
 msgBox.innerHTML = html;
 
-// ✅ SMART AUTO SCROLL
-let isNearBottom = msgBox.scrollTop + msgBox.clientHeight >= msgBox.scrollHeight - 100;
-
 setTimeout(()=>{
-if(isNearBottom){
 msgBox.scrollTop = msgBox.scrollHeight;
-}
-},50);
+},100);
 
 });
 }
-
-
   
 function selectMsgUser(user){
 
 msgReceiver = user;
+msgHeader.innerText = user;
 
-document.getElementById("msgHeader").innerText = user;
-
-// load messages
 listenMsg();
 listenTyping();
 listenOnline();
-
-// 🔥 FORCE SCROLL AFTER LOAD
-setTimeout(()=>{
-let box = document.getElementById("msgBox");
-box.scrollTop = box.scrollHeight;
-},300);
-
 }
 
   
@@ -2648,15 +2611,8 @@ msgInput.style.height = msgInput.scrollHeight + "px";
 
 }
 // SET ONLINE
-window.addEventListener("firebase-ready", ()=>{
-
-msgUser = getLoggedUser().username;
-
-// ✅ NOW SAFE
-set(ref(db,"status/"+msgUser),{
-online:true
-});
-
+window.addEventListener("load",()=>{
+set(ref(db,"status/"+msgUser),{online:true});
 });
 
 // OFFLINE
