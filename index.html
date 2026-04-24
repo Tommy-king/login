@@ -207,24 +207,30 @@ scroll-behavior: smooth;
       
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-  import { firebaseConfig } from "./firebase-config.js";
-  import { serverTimestamp } from "firebase/database";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { 
+  getDatabase, ref, set, get, child, update, remove, onValue, serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  ts: serverTimestamp()
+import { firebaseConfig } from "./firebase-config.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  window.db = db;
-  window.ref = ref;
-  window.set = set;
-  window.get = get;
-  window.child = child;
-  window.update = update;
-  window.remove = remove;
-  window.onValue = onValue;
+// ✅ expose AFTER init
+window.db = db;
+window.ref = ref;
+window.set = set;
+window.get = get;
+window.child = child;
+window.update = update;
+window.remove = remove;
+window.onValue = onValue;
+window.serverTimestamp = serverTimestamp;
+
+// ✅ notify app Firebase is ready
+window.dispatchEvent(new Event("firebase-ready"));
+
 </script>
 
 <!-- LOGIN PAGE -->
@@ -2481,8 +2487,6 @@ msgFile.value="";
 // SAVE
 function saveMsg(id,text,file,fileName,fileType){
 
-let now = Date.now(); // 🔥 REAL timestamp
-
 set(ref(db,"messages/"+id),{
 sender:msgUser,
 receiver:msgReceiver,
@@ -2491,8 +2495,11 @@ file:file || "",
 fileName:fileName || "",
 fileType:fileType || "",
 
-ts: now, // ✅ for sorting
-time: formatIST(now), // ✅ for display
+// ✅ REAL SERVER TIME
+ts: Date.now(), // keep this for sorting
+serverTime: serverTimestamp(), // optional
+
+time:getISTTime(),
 
 status:"sent"
 });
@@ -2641,8 +2648,15 @@ msgInput.style.height = msgInput.scrollHeight + "px";
 
 }
 // SET ONLINE
-window.addEventListener("load",()=>{
-set(ref(db,"status/"+msgUser),{online:true});
+window.addEventListener("firebase-ready", ()=>{
+
+msgUser = getLoggedUser().username;
+
+// ✅ NOW SAFE
+set(ref(db,"status/"+msgUser),{
+online:true
+});
+
 });
 
 // OFFLINE
