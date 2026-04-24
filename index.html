@@ -2317,33 +2317,45 @@ function openMessagePage(){
 
 msgUser = getLoggedUser().username;
 
-setOnline();
-
 contentArea.innerHTML = `
 
 <div class="card p-0" style="height:calc(100vh - 80px);">
 <div class="row g-0 h-100">
 
+<!-- USER LIST -->
 <div class="col-md-4 border-end d-flex flex-column">
-<div style="padding:10px;font-weight:bold;background:#f0f2f5">Chats</div>
-<div id="msgUserList" style="flex:1;overflow-y:auto"></div>
+
+<div style="padding:10px;font-weight:bold;background:#f0f2f5">
+Chats
 </div>
 
+<div id="msgUserList" style="flex:1;overflow-y:auto"></div>
+
+</div>
+
+<!-- CHAT AREA -->
 <div class="col-md-8 d-flex flex-column">
 
-<div id="msgHeader" style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;">
+<div id="msgHeader" style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;font-weight:bold;">
 Select user
 </div>
 
 <div id="msgTyping" style="font-size:12px;color:gray;padding-left:10px;height:18px;"></div>
 
-<div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;"></div>
+<div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;scroll-behavior:smooth;"></div>
 
-<div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;">
+<!-- INPUT -->
+<div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;align-items:flex-end;">
+
 <input type="file" id="msgFile" hidden>
-<button onclick="msgFile.click()">📎</button>
-<textarea id="msgInput" style="flex:1"></textarea>
+
+<button onclick="document.getElementById('msgFile').click()">📎</button>
+
+<textarea id="msgInput" placeholder="Type message"
+style="flex:1;resize:none;max-height:100px;overflow-y:auto"></textarea>
+
 <button onclick="sendMsg()">➤</button>
+
 </div>
 
 </div>
@@ -2352,23 +2364,36 @@ Select user
 `;
 
 loadMsgUsers();
+listenUserList();
+initTextarea();
+initTyping();
 }
 
 
 let msgReceiver = "";
 let msgUser = "";
 
-function getChatId(u1,u2){
-  return [u1,u2].sort().join("_");
+function getISTTime(){
+let d = new Date();
+return d.toLocaleString("en-GB", {
+timeZone: "Asia/Kolkata",
+day: "2-digit",
+month: "2-digit",
+year: "numeric",
+hour: "2-digit",
+minute: "2-digit",
+second: "2-digit"
+}).replace(",", "");
 }
+  
 // LOAD USERS
 async function loadMsgUsers(){
 
 let users = await getUsers();
 let html = "";
 
-const snap = await get(ref(db,"chats"));
-let chats = snap.exists() ? snap.val() : {};
+const snap = await get(ref(db,"messages"));
+let messages = snap.exists() ? snap.val() : {};
 
 users.forEach(u=>{
 
@@ -2376,10 +2401,7 @@ if(u.username !== msgUser){
 
 let unread = 0;
 let lastMsg = "";
-let lastTime = 0;
-
-let chatId = getChatId(msgUser, u.username);
-let messages = chats[chatId]?.messages || {};
+let lastTime = "";
 
 Object.values(messages).forEach(m=>{
 
@@ -2387,7 +2409,10 @@ if(m.sender === u.username && m.receiver === msgUser && m.status !== "seen"){
 unread++;
 }
 
-if(m.time > lastTime){
+if(
+(m.sender === msgUser && m.receiver === u.username) ||
+(m.sender === u.username && m.receiver === msgUser)
+){
 lastMsg = m.text || (m.file ? "📎 File" : "");
 lastTime = m.time;
 }
@@ -2395,7 +2420,7 @@ lastTime = m.time;
 });
 
 html += `
-<div onclick="selectMsgUser('${u.username}', this)"
+<div onclick="selectMsgUser('${u.username}')"
 style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between">
 
 <div>
@@ -2404,7 +2429,7 @@ style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;jus
 </div>
 
 <div style="text-align:right">
-<small>${lastTime ? new Date(lastTime).toLocaleTimeString() : ""}</small><br>
+<small>${lastTime}</small><br>
 ${unread>0 ? `<span style="background:green;color:white;border-radius:50%;padding:4px 8px">${unread}</span>` : ""}
 </div>
 
@@ -2448,16 +2473,14 @@ msgFile.value="";
 // SAVE
 function saveMsg(id,text,file,fileName,fileType){
 
-let chatId = getChatId(msgUser,msgReceiver);
-
-set(ref(db,"chats/"+chatId+"/messages/"+id),{
+set(ref(db,"messages/"+id),{
 sender:msgUser,
 receiver:msgReceiver,
 text:text,
 file:file || "",
 fileName:fileName || "",
 fileType:fileType || "",
-time:Date.now(),
+time:getISTTime(),
 status:"sent"
 });
 
@@ -2465,9 +2488,7 @@ status:"sent"
 
 function listenMsg(){
 
-let chatId = getChatId(msgUser,msgReceiver);
-
-onValue(ref(db,"chats/"+chatId+"/messages"), snap=>{
+onValue(ref(db,"messages"), snap=>{
 
 let msgs = [];
 
@@ -2475,23 +2496,26 @@ snap.forEach(c=>{
 msgs.push({id:c.key,...c.val()});
 });
 
-msgs.sort((a,b)=>a.time - b.time);
+msgs.sort((a,b)=>a.id - b.id);
 
 let html = "";
 
 msgs.forEach(m=>{
 
+if(
+(m.sender===msgUser && m.receiver===msgReceiver) ||
+(m.sender===msgReceiver && m.receiver===msgUser)
+){
+
 let isMe = m.sender === msgUser;
 
 // STATUS UPDATE
 if(m.receiver === msgUser){
-if(m.status==="sent")
-update(ref(db,"chats/"+chatId+"/messages/"+m.id),{status:"delivered"});
-
+if(m.status==="sent") update(ref(db,"messages/"+m.id),{status:"delivered"});
 if(m.status!=="seen"){
 setTimeout(()=>{
-update(ref(db,"chats/"+chatId+"/messages/"+m.id),{status:"seen"});
-},200);
+update(ref(db,"messages/"+m.id),{status:"seen"});
+},300);
 }
 }
 
@@ -2504,21 +2528,26 @@ ${m.text || ""}
 
 ${m.file ? (
 m.fileType.startsWith("image")
-? `<br><img src="${m.file}" width="150" onclick="openImage('${m.file}')">`
+? `<br><img src="${m.file}" width="150">`
 : `<br><a href="${m.file}" download="${m.fileName}">📄 ${m.fileName}</a>`
 ) : ""}
 
 <div style="font-size:10px;text-align:right">
-${new Date(m.time).toLocaleTimeString()} ${isMe?getTick(m.status):""}
+${m.time} ${isMe?getTick(m.status):""}
 </div>
 
 </div>
 </div>
 `;
+}
+
 });
 
 msgBox.innerHTML = html;
+
+setTimeout(()=>{
 msgBox.scrollTop = msgBox.scrollHeight;
+},100);
 
 });
 }
@@ -2538,35 +2567,17 @@ function initTyping(){
 
 msgInput.addEventListener("input", ()=>{
 
-let chatId = getChatId(msgUser,msgReceiver);
-
-set(ref(db,"typing/"+chatId+"/"+msgUser),{
+set(ref(db,"typing/"+msgReceiver),{
+from:msgUser,
 status:true
 });
 
 setTimeout(()=>{
-set(ref(db,"typing/"+chatId+"/"+msgUser),{status:false});
+set(ref(db,"typing/"+msgReceiver),{status:false});
 },1000);
 
 });
 }
-
-function listenTyping(){
-
-let chatId = getChatId(msgUser,msgReceiver);
-
-onValue(ref(db,"typing/"+chatId), snap=>{
-
-let data = snap.val();
-if(!data) return;
-
-let typingUser = Object.keys(data).find(u=>u!==msgUser && data[u].status);
-
-msgTyping.innerText = typingUser ? typingUser+" typing..." : "";
-
-});
-}
-  
 
 function listenTyping(){
 
@@ -2579,23 +2590,18 @@ msgTyping.innerText = (d && d.status) ? d.from+" typing..." : "";
 });
 }
 
-function setOnline(){
+function listenOnline(){
 
-if(!msgUser) return;
+onValue(ref(db,"status/"+msgReceiver), snap=>{
 
-set(ref(db,"status/"+msgUser),{online:true});
-}
+let s = snap.val();
 
-function setOffline(){
+msgHeader.innerText = s?.online
+? msgReceiver+" (Online)"
+: msgReceiver+" (Last seen: "+s?.lastSeen+")";
 
-if(!msgUser) return;
-
-set(ref(db,"status/"+msgUser),{
-online:false,
-lastSeen:new Date().toLocaleString()
 });
 }
-  
 function initTextarea(){
 
 msgInput.addEventListener("input", ()=>{
@@ -2641,29 +2647,28 @@ reader.readAsDataURL(file);
 
 });
 
-function listenMessageNotifications(){
+  function listenMessageNotifications(){
 
 const user = getLoggedUser().username;
 
-onValue(ref(db,"chats"), snap=>{
+onValue(ref(db,"messages"), snap=>{
 
 let count = 0;
 
-snap.forEach(chat=>{
-let messages = chat.val().messages || {};
+snap.forEach(child=>{
+let m = child.val();
 
-Object.values(messages).forEach(m=>{
 if(m.receiver === user && m.status !== "seen"){
 count++;
 }
-});
 });
 
 document.getElementById("notifyCount").innerText = count;
 
 });
+
 }
-  
+
 function getTick(status){
 if(status==="sent") return "✓";
 if(status==="delivered") return "✓✓";
@@ -2675,24 +2680,24 @@ function listenUserList(){
 onValue(ref(db,"messages"), ()=> loadMsgUsers());
 }
   
-function selectMsgUser(user, el){
+function selectMsgUser(user){
 
 msgReceiver = user;
 
 document.getElementById("msgHeader").innerText = user;
 
-// highlight
+// Optional: highlight selected user
 document.querySelectorAll("#msgUserList > div").forEach(d=>{
 d.style.background = "";
 });
-if(el) el.style.background = "#f1f5f9";
+event.currentTarget.style.background = "#f1f5f9";
 
 listenMsg();
 listenTyping();
 listenOnline();
-}
-  
-function toggleSidebar(){
+} 
+
+  function toggleSidebar(){
   document.querySelector(".sidebar").classList.toggle("active");
 }
 function openImage(src){
