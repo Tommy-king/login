@@ -2392,7 +2392,7 @@ contentArea.innerHTML = `
         <textarea id="msgInput" placeholder="Type message"
           style="
             flex:1;
-            resize:auto;
+            resize:none;
             max-height:100px;
             overflow-y:auto;
           ">
@@ -2586,7 +2586,7 @@ html += `
 
 <div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
 
-${m.text || ""}
+${(m.text || "").replace(/\n/g,"<br>")}
 
 ${m.file ? (
 m.fileType.startsWith("image")
