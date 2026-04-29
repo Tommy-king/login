@@ -207,8 +207,10 @@ cursor:grab;
 
 
 #chatPage {
-  overflow-x: auto;
+  overflow-x: auto !important;
+  white-space: nowrap;
 }
+  
 
 #chatPage::-webkit-scrollbar {
   height: 6px;
@@ -2583,7 +2585,7 @@ snap.forEach(c=>{
   msgs.push({id:c.key,...c.val()});
 });
 
-// 👉 (optional later: replace with serverTime sort)
+// Sort messages
 msgs.sort((a,b)=>a.id - b.id);
 
 let html = "";
@@ -2608,22 +2610,32 @@ if(m.receiver === msgUser){
 }
 
 html += `
-<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin:5px 0;">
+<div style="
+  display:flex;
+  justify-content:${isMe?'flex-end':'flex-start'};
+  margin:5px 0;
+  align-items:flex-end;
+">
 
   <div style="
     background:${isMe?'#dcf8c6':'#fff'};
-    padding:8px;
+    padding:8px 10px;
     border-radius:10px;
     max-width:70%;
-    white-space: pre-wrap;       /* 🔥 MAIN FIX */
+    display:inline-block;        /* 🔥 FIX */
+    white-space: pre-wrap;       /* 🔥 multiline */
     word-break: break-word;
+    line-height:1.4;
   ">
 
     ${m.text || ""}
 
     ${m.file ? (
       m.fileType && m.fileType.startsWith("image")
-      ? `<br><img src="${m.file}" style="max-width:150px;border-radius:8px;cursor:pointer" onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">`
+      ? `<br>
+         <img src="${m.file}" 
+         style="max-width:150px;border-radius:8px;cursor:pointer"
+         onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">`
       : `<br>
          <span style="cursor:pointer;color:blue"
          onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
@@ -2631,7 +2643,12 @@ html += `
          </span>`
     ) : ""}
 
-    <div style="font-size:10px;text-align:right;margin-top:3px;">
+    <div style="
+      font-size:10px;
+      text-align:right;
+      margin-top:3px;
+      opacity:0.7;
+    ">
       ${m.time || ""} ${isMe?getTick(m.status):""}
     </div>
 
@@ -2645,7 +2662,7 @@ html += `
 
 msgBox.innerHTML = html;
 
-// Auto scroll
+// Auto scroll to bottom
 setTimeout(()=>{
   msgBox.scrollTop = msgBox.scrollHeight;
 },100);
