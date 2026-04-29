@@ -203,6 +203,22 @@ cursor:grab;
 }
 
 }
+
+
+
+#chatPage {
+  overflow-x: auto;
+}
+
+#chatPage::-webkit-scrollbar {
+  height: 6px;
+}
+
+#chatPage::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 10px;
+}
+  
 </style>
 </head>
 <body>
@@ -2326,13 +2342,14 @@ msgUser = getLoggedUser().username;
 
 contentArea.innerHTML = `
 
-<div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
-  <div class="row g-0 h-100">
+<div id="chatPage" class="card p-0" 
+     style="height:calc(100vh - 80px); overflow-x:auto; overflow-y:hidden;">
+
+  <div class="row g-0 h-100" style="min-width:1000px;">
 
     <!-- ================= USER LIST ================= -->
     <div class="col-md-4 border-end d-flex flex-column h-100">
 
-      <!-- HEADER -->
       <div style="
         padding:10px;
         font-weight:bold;
@@ -2342,7 +2359,6 @@ contentArea.innerHTML = `
         Chats
       </div>
 
-      <!-- USER LIST (SCROLLABLE) -->
       <div id="msgUserList" style="
         flex:1;
         overflow-y:auto;
@@ -2353,7 +2369,7 @@ contentArea.innerHTML = `
     <!-- ================= CHAT AREA ================= -->
     <div class="col-md-8 d-flex flex-column h-100">
 
-      <!-- HEADER (FIXED) -->
+      <!-- HEADER -->
       <div id="msgHeader" style="
         padding:10px;
         background:#f0f2f5;
@@ -2373,16 +2389,15 @@ contentArea.innerHTML = `
         flex-shrink:0;
       "></div>
 
-      <!-- CHAT BOX (SCROLLABLE) -->
+      <!-- CHAT BOX -->
       <div id="msgBox" style="
         flex:1;
         overflow-y:auto;
         padding:10px;
         background:#e5ddd5;
-        scroll-behavior:smooth;
       "></div>
 
-      <!-- INPUT (FIXED FOOTER) -->
+      <!-- INPUT -->
       <div style="
         padding:10px;
         background:#f0f2f5;
@@ -2559,12 +2574,16 @@ function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
 
+let msgBox = document.getElementById("msgBox");
+if(!msgBox) return;
+
 let msgs = [];
 
 snap.forEach(c=>{
-msgs.push({id:c.key,...c.val()});
+  msgs.push({id:c.key,...c.val()});
 });
 
+// 👉 (optional later: replace with serverTime sort)
 msgs.sort((a,b)=>a.id - b.id);
 
 let html = "";
@@ -2572,43 +2591,52 @@ let html = "";
 msgs.forEach(m=>{
 
 if(
-(m.sender===msgUser && m.receiver===msgReceiver) ||
-(m.sender===msgReceiver && m.receiver===msgUser)
+  (m.sender===msgUser && m.receiver===msgReceiver) ||
+  (m.sender===msgReceiver && m.receiver===msgUser)
 ){
 
 let isMe = m.sender === msgUser;
 
 // STATUS UPDATE
 if(m.receiver === msgUser){
-if(m.status==="sent") update(ref(db,"messages/"+m.id),{status:"delivered"});
-if(m.status!=="seen"){
-setTimeout(()=>{
-update(ref(db,"messages/"+m.id),{status:"seen"});
-},300);
-}
+  if(m.status==="sent") update(ref(db,"messages/"+m.id),{status:"delivered"});
+  if(m.status!=="seen"){
+    setTimeout(()=>{
+      update(ref(db,"messages/"+m.id),{status:"seen"});
+    },300);
+  }
 }
 
 html += `
 <div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin:5px 0;">
 
-<div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
+  <div style="
+    background:${isMe?'#dcf8c6':'#fff'};
+    padding:8px;
+    border-radius:10px;
+    max-width:70%;
+    white-space: pre-wrap;       /* 🔥 MAIN FIX */
+    word-break: break-word;
+  ">
 
-${m.text || ""}
+    ${m.text || ""}
 
-${m.file ? (
-m.fileType.startsWith("image")
-? `<br><img src="${m.file}" width="150">`
-: `<br><span style="cursor:pointer;color:blue"
-onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
-📄 ${m.fileName}
-</span>`
-) : ""}
+    ${m.file ? (
+      m.fileType && m.fileType.startsWith("image")
+      ? `<br><img src="${m.file}" style="max-width:150px;border-radius:8px;cursor:pointer" onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">`
+      : `<br>
+         <span style="cursor:pointer;color:blue"
+         onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
+         📄 ${m.fileName}
+         </span>`
+    ) : ""}
 
-<div style="font-size:10px;text-align:right">
-${m.time} ${isMe?getTick(m.status):""}
-</div>
+    <div style="font-size:10px;text-align:right;margin-top:3px;">
+      ${m.time || ""} ${isMe?getTick(m.status):""}
+    </div>
 
-</div>
+  </div>
+
 </div>
 `;
 }
@@ -2617,12 +2645,14 @@ ${m.time} ${isMe?getTick(m.status):""}
 
 msgBox.innerHTML = html;
 
+// Auto scroll
 setTimeout(()=>{
-msgBox.scrollTop = msgBox.scrollHeight;
+  msgBox.scrollTop = msgBox.scrollHeight;
 },100);
 
 });
 }
+  
   
 function selectMsgUser(user){
 
