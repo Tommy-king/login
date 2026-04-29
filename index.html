@@ -2548,7 +2548,7 @@ receiver:msgReceiver,
 text:text,
 file:file || "",
 fileName:fileName || "",
-fileType:fileType || "",
+fileType: fileType || (file ? file.type : ""),
 time:getISTTime(),
 status:"sent"
 });
@@ -2782,32 +2782,90 @@ function closeImage(){
   document.getElementById("imgPreview").style.display = "none";
 }
 
-function previewFile(src,type,name){
+function previewFile(src, type, name){
 
   let preview = document.getElementById("imgPreview");
+
+  // 🔥 FIX: detect type properly
+  let fileType = type || "";
+
   let content = "";
 
-  if(type.startsWith("image")){
-    content = `<img src="${src}" style="max-width:90%;max-height:90%">`;
+  // ✅ IMAGE (strong detection)
+  if(fileType.startsWith("image") || src.startsWith("data:image")){
+    
+    content = `
+      <img src="${src}" 
+      style="max-width:90%; max-height:90%; border-radius:10px;">
+      
+      <br><br>
+      <a href="${src}" download="${name}" style="color:yellow">Download</a>
+    `;
   }
-  else if(type === "application/pdf"){
-    content = `<iframe src="${src}" style="width:90%;height:90%"></iframe>`;
+
+  // ✅ PDF
+  else if(fileType.includes("pdf")){
+    
+    content = `
+      <iframe src="${src}" style="width:90%;height:90%"></iframe>
+      <br>
+      <a href="${src}" download="${name}" style="color:yellow">Download</a>
+    `;
   }
-  else{
+
+  // ✅ TEXT / CODE / CSV
+  else if(fileType.includes("text") || fileType.includes("json") || fileType.includes("csv")){
+    
+    fetch(src)
+    .then(res => res.text())
+    .then(text => {
+      preview.innerHTML = `
+        <div style="color:white; width:80%; height:80%; overflow:auto;">
+          <pre>${text}</pre>
+          <br>
+          <a href="${src}" download="${name}" style="color:yellow">Download</a>
+        </div>
+        <span onclick="closeImage()" style="
+          position:absolute;top:20px;right:30px;
+          color:white;font-size:30px;cursor:pointer;">✖</span>
+      `;
+    });
+
+    preview.style.display = "flex";
+    return;
+  }
+
+  // ✅ DEFAULT (ALL FILES fallback)
+  else {
     content = `
       <div style="color:white;text-align:center">
-        <p>Preview not available</p>
+        <h3>Preview not supported</h3>
         <a href="${src}" download="${name}" style="color:yellow">Download File</a>
       </div>
     `;
   }
 
+  // COMMON UI
   preview.innerHTML = `
-    <div style="position:relative;width:100%;height:100%;display:flex;justify-content:center;align-items:center">
+    <div style="
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    ">
       ${content}
+
       <span onclick="closeImage()" style="
-        position:absolute;top:20px;right:30px;
-        color:white;font-size:30px;cursor:pointer;">✖</span>
+        position:absolute;
+        top:20px;
+        right:30px;
+        color:white;
+        font-size:30px;
+        cursor:pointer;
+      ">✖</span>
     </div>
   `;
 
