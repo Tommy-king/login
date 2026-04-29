@@ -2326,11 +2326,21 @@ contentArea.innerHTML = `
 <!-- USER LIST -->
 <div class="col-md-4 border-end d-flex flex-column">
 
-<div style="padding:10px;font-weight:bold;background:#f0f2f5">
-Chats
-</div>
+      <!-- HEADER -->
+      <div style="
+        padding:10px;
+        font-weight:bold;
+        background:#f0f2f5;
+        flex-shrink:0;
+      ">
+        Chats
+      </div>
 
-<div id="msgUserList" style="flex:1;overflow-y:auto"></div>
+      <!-- USER LIST (SCROLLABLE) -->
+      <div id="msgUserList" style="
+        flex:1;
+        overflow-y:auto;
+      "></div>
 
 </div>
 
