@@ -2320,11 +2320,10 @@ msgUser = getLoggedUser().username;
 contentArea.innerHTML = `
 
 <div class="card p-0" style="height:calc(100vh - 80px);">
+  <div class="row g-0 h-100">
 
-<div class="row g-0 h-100">
-
-<!-- USER LIST -->
-<div class="col-md-4 border-end d-flex flex-column">
+    <!-- ================= USER LIST ================= -->
+    <div class="col-md-4 border-end d-flex flex-column h-100">
 
       <!-- HEADER -->
       <div style="
@@ -2342,11 +2341,10 @@ contentArea.innerHTML = `
         overflow-y:auto;
       "></div>
 
-</div>
+    </div>
 
-<!-- CHAT AREA -->
-<!-- ================= CHAT AREA ================= -->
-    <div class="col-md-8 d-flex flex-column">
+    <!-- ================= CHAT AREA ================= -->
+    <div class="col-md-8 d-flex flex-column h-100">
 
       <!-- HEADER (FIXED) -->
       <div id="msgHeader" style="
@@ -2406,8 +2404,7 @@ contentArea.innerHTML = `
 
     </div>
 
-
-</div>
+  </div>
 </div>
 
 <!-- FILE PREVIEW MODAL -->
@@ -2426,7 +2423,6 @@ contentArea.innerHTML = `
 
 `;
 
-
 /* INIT FUNCTIONS */
 loadMsgUsers();
 listenUserList();
@@ -2434,6 +2430,7 @@ initTextarea();
 initTyping();
 
 }
+
 
 
 let msgReceiver = "";
