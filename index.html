@@ -2335,46 +2335,67 @@ Chats
 </div>
 
 <!-- CHAT AREA -->
-<div class="col-md-8 d-flex flex-column">
+<!-- ================= CHAT AREA ================= -->
+    <div class="col-md-8 d-flex flex-column">
 
-<!-- HEADER -->
-<div id="msgHeader" style="
-padding:10px;
-background:#f0f2f5;
-border-bottom:1px solid #ccc;
-font-weight:bold;
-">
-Select user
-</div>
+      <!-- HEADER (FIXED) -->
+      <div id="msgHeader" style="
+        padding:10px;
+        background:#f0f2f5;
+        border-bottom:1px solid #ccc;
+        font-weight:bold;
+        flex-shrink:0;
+      ">
+        Select user
+      </div>
 
-<!-- MESSAGES -->
-<div id="msgBox" style="
-flex:1;
-overflow-y:auto;
-padding:10px;
-background:#e5ddd5;
-"></div>
+      <!-- TYPING -->
+      <div id="msgTyping" style="
+        font-size:12px;
+        color:gray;
+        padding-left:10px;
+        height:18px;
+        flex-shrink:0;
+      "></div>
 
-<!-- INPUT -->
-<div style="
-padding:10px;
-background:#f0f2f5;
-display:flex;
-gap:5px;
-">
+      <!-- CHAT BOX (SCROLLABLE) -->
+      <div id="msgBox" style="
+        flex:1;
+        overflow-y:auto;
+        padding:10px;
+        background:#e5ddd5;
+        scroll-behavior:smooth;
+      "></div>
 
-<input type="file" id="msgFile" hidden>
+      <!-- INPUT (FIXED FOOTER) -->
+      <div style="
+        padding:10px;
+        background:#f0f2f5;
+        display:flex;
+        gap:5px;
+        align-items:flex-end;
+        flex-shrink:0;
+      ">
 
-<button class="btn btn-light"
-onclick="document.getElementById('msgFile').click()">📎</button>
+        <input type="file" id="msgFile" hidden>
 
-<input id="msgInput" class="form-control" placeholder="Type message">
+        <button onclick="document.getElementById('msgFile').click()">📎</button>
 
-<button class="btn btn-success" onclick="sendMsg()">➤</button>
+        <textarea id="msgInput" placeholder="Type message"
+          style="
+            flex:1;
+            resize:none;
+            max-height:100px;
+            overflow-y:auto;
+          ">
+        </textarea>
 
-</div>
+        <button onclick="sendMsg()">➤</button>
 
-</div>
+      </div>
+
+    </div>
+
 
 </div>
 </div>
