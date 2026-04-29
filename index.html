@@ -2626,12 +2626,13 @@ function selectMsgUser(user){
 
   msgReceiver = user;
 
+  // ✅ correct ID
   document.getElementById("msgHeaderText").innerText = user;
 
-  // 👉 Slide chat panel (mobile)
+  // ✅ show chat panel
   document.getElementById("chatPanel").style.left = "0";
 
-  // 👉 Show back button
+  // ✅ show back button (mobile)
   document.getElementById("backBtn").style.display = "inline-block";
 
   listenMsg();
@@ -2762,7 +2763,7 @@ function selectMsgUser(user){
 
 msgReceiver = user;
 
-document.getElementById("msgHeader").innerText = user;
+document.getElementById("msgHeaderText").innerText = user;
 
 // Optional: highlight selected user
 document.querySelectorAll("#msgUserList > div").forEach(d=>{
