@@ -376,7 +376,7 @@ logout();
 // Get users from Firebase Realtime Database
 async function getUsers() {
   try {
-    const dbRef = ref(db);
+    const dbRef = ref(window.db, "messages");
     const snapshot = await get(child(dbRef, "users"));
     if (snapshot.exists()) {
       return Object.values(snapshot.val());
@@ -2120,6 +2120,8 @@ window.onload = () => {
     resetTimer();
     home();
     listenNotifications();
+    openMessagePage();
+    
   } else {
     document.getElementById("loginPage").style.display = "block";
     document.getElementById("dashboard").style.display = "none";
