@@ -2319,7 +2319,7 @@ msgUser = getLoggedUser().username;
 
 contentArea.innerHTML = `
 
-<div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
+<div class="card p-0" style="height:calc(100vh - 80px); overflow:auto;">
   <div class="row g-0 h-100">
 
     <!-- ================= USER LIST ================= -->
@@ -2387,18 +2387,16 @@ contentArea.innerHTML = `
 
         <input type="file" id="msgFile" hidden>
 
-        <button onclick="document.getElementById('msgFile').click()">📎</button>
+        <button class="btn btn-light" onclick="document.getElementById('msgFile').click()">📎</button>
 
         <textarea id="msgInput" placeholder="Type message"
           style="
-            flex:1;
-            resize:none;
             max-height:100px;
             overflow-y:auto;
           ">
         </textarea>
 
-        <button onclick="sendMsg()">➤</button>
+        <button class="btn btn-success" onclick="sendMsg()">➤</button>
 
       </div>
 
