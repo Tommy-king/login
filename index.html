@@ -211,7 +211,6 @@ cursor:grab;
 <!-- Firebase setup script - MUST be before your main JS script -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { serverTimestamp } from "firebase/database";
   import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
   import { firebaseConfig } from "./firebase-config.js";
 
@@ -376,7 +375,7 @@ logout();
 // Get users from Firebase Realtime Database
 async function getUsers() {
   try {
-    const dbRef = ref(window.db, "messages");
+    const dbRef = ref(db);
     const snapshot = await get(child(dbRef, "users"));
     if (snapshot.exists()) {
       return Object.values(snapshot.val());
@@ -2120,8 +2119,6 @@ window.onload = () => {
     resetTimer();
     home();
     listenNotifications();
-    openMessagePage();
-    
   } else {
     document.getElementById("loginPage").style.display = "block";
     document.getElementById("dashboard").style.display = "none";
@@ -2546,22 +2543,18 @@ msgFile.value="";
 function saveMsg(id,text,file,fileName,fileType){
 
 set(ref(db,"messages/"+id),{
-  sender:msgUser,
-  receiver:msgReceiver,
-  text:text,
-
-  file:file || "",
-  fileName:fileName || "",
-  fileType:fileType || "",
-
-  time:getISTTime(),          // for display only (UI)
-  serverTime: serverTimestamp(), // 🔥 MAIN FIX (common time)
-
-  status:"sent"
+sender:msgUser,
+receiver:msgReceiver,
+text:text,
+file:file || "",
+fileName:fileName || "",
+fileType:fileType || "",
+time:getISTTime(),
+status:"sent"
 });
 
 }
-  
+
 function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
@@ -2572,7 +2565,7 @@ snap.forEach(c=>{
 msgs.push({id:c.key,...c.val()});
 });
 
-msgs.sort((a,b)=> (a.serverTime || 0) - (b.serverTime || 0));
+msgs.sort((a,b)=>a.id - b.id);
 
 let html = "";
 
@@ -2629,38 +2622,6 @@ msgBox.scrollTop = msgBox.scrollHeight;
 },100);
 
 });
-}
-
-  function previewFile(src,type,name){
-
-  let preview = document.getElementById("imgPreview");
-  let content = "";
-
-  if(type.startsWith("image")){
-    content = `<img src="${src}" style="max-width:90%;max-height:90%">`;
-  }
-  else if(type === "application/pdf"){
-    content = `<iframe src="${src}" style="width:90%;height:90%"></iframe>`;
-  }
-  else{
-    content = `
-      <div style="color:white;text-align:center">
-        <p>Preview not available</p>
-        <a href="${src}" download="${name}" style="color:yellow">Download File</a>
-      </div>
-    `;
-  }
-
-  preview.innerHTML = `
-    <div style="position:relative;width:100%;height:100%;display:flex;justify-content:center;align-items:center">
-      ${content}
-      <span onclick="closeImage()" style="
-        position:absolute;top:20px;right:30px;
-        color:white;font-size:30px;cursor:pointer;">✖</span>
-    </div>
-  `;
-
-  preview.style.display = "flex";
 }
   
 function selectMsgUser(user){
@@ -2787,7 +2748,8 @@ if(status==="seen") return "<span style='color:blue'>✓✓</span>";
 return "";
 }
 
-function listenUserList(){
+
+  function listenUserList(){
 onValue(ref(db,"messages"), ()=> loadMsgUsers());
 }
   
@@ -2818,6 +2780,38 @@ function openImage(src){
 
 function closeImage(){
   document.getElementById("imgPreview").style.display = "none";
+}
+
+function previewFile(src,type,name){
+
+  let preview = document.getElementById("imgPreview");
+  let content = "";
+
+  if(type.startsWith("image")){
+    content = `<img src="${src}" style="max-width:90%;max-height:90%">`;
+  }
+  else if(type === "application/pdf"){
+    content = `<iframe src="${src}" style="width:90%;height:90%"></iframe>`;
+  }
+  else{
+    content = `
+      <div style="color:white;text-align:center">
+        <p>Preview not available</p>
+        <a href="${src}" download="${name}" style="color:yellow">Download File</a>
+      </div>
+    `;
+  }
+
+  preview.innerHTML = `
+    <div style="position:relative;width:100%;height:100%;display:flex;justify-content:center;align-items:center">
+      ${content}
+      <span onclick="closeImage()" style="
+        position:absolute;top:20px;right:30px;
+        color:white;font-size:30px;cursor:pointer;">✖</span>
+    </div>
+  `;
+
+  preview.style.display = "flex";
 }
 
   
