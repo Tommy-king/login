@@ -201,17 +201,22 @@ cursor:grab;
   white-space: pre-wrap;
 }
 
-  #chatUserCol.hide{
-    display:none !important;
+  #chatUserCol{
+    display:block;
   }
 
   #chatAreaCol{
     display:none;
   }
 
-  #chatAreaCol.show{
+  #chatUserCol.active{
+    display:none;
+  }
+
+  #chatAreaCol.active{
     display:flex !important;
   }
+
 
   
 }
@@ -2341,7 +2346,7 @@ contentArea.innerHTML = `
 <div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
   <div class="row g-0 h-100">
 
-    <!-- ================= USER LIST ================= -->
+    <!-- USER LIST -->
     <div id="chatUserCol" class="col-md-4 border-end d-flex flex-column h-100">
 
       <div style="padding:10px;font-weight:bold;background:#f0f2f5;">
@@ -2352,51 +2357,20 @@ contentArea.innerHTML = `
 
     </div>
 
-    <!-- ================= CHAT AREA ================= -->
+    <!-- CHAT AREA -->
     <div id="chatAreaCol" class="col-md-8 d-flex flex-column h-100">
 
-      <!-- HEADER -->
-      <div id="msgHeader" style="
-        padding:10px;
-        background:#f0f2f5;
-        border-bottom:1px solid #ccc;
-        font-weight:bold;
-      ">
-        <span onclick="backToUsers()" 
-              style="cursor:pointer;margin-right:10px;font-size:18px;">
-              ⬅
-        </span>
-
+      <div style="padding:10px;background:#f0f2f5;border-bottom:1px solid #ccc;font-weight:bold;">
+        <span onclick="backToUsers()" style="cursor:pointer;margin-right:10px;">⬅</span>
         <span id="msgHeaderName">Select user</span>
       </div>
 
-      <!-- TYPING -->
       <div id="msgTyping" style="font-size:12px;color:gray;padding-left:10px;height:18px;"></div>
 
-      <!-- CHAT BOX -->
-      <div id="msgBox" style="
-        flex:1;
-        overflow-y:auto;
-        padding:10px;
-        background:#e5ddd5;
-        white-space:pre-wrap;
-      "></div>
+      <div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;"></div>
 
-      <!-- INPUT -->
-      <div style="
-        padding:10px;
-        background:#f0f2f5;
-        display:flex;
-        gap:5px;
-        align-items:flex-end;
-      ">
-        <input type="file" id="msgFile" hidden>
-
-        <button onclick="document.getElementById('msgFile').click()">📎</button>
-
-        <textarea id="msgInput" placeholder="Type message"
-          style="flex:1;resize:none;max-height:100px;"></textarea>
-
+      <div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;">
+        <textarea id="msgInput" style="flex:1;"></textarea>
         <button onclick="sendMsg()">➤</button>
       </div>
 
@@ -2407,12 +2381,9 @@ contentArea.innerHTML = `
 
 `;
 
-/* INIT */
 loadMsgUsers();
 listenUserList();
 initTextarea();
-initTyping();
-initEnterSend();
 
 }
 
@@ -2613,17 +2584,17 @@ function selectMsgUser(user, e){
     d.style.background = "";
   });
 
-  if(e) e.currentTarget.style.background = "#f1f5f9";
+  if(e) e.currentTarget.style.background = "#e0e0e0";
 
-  // MOBILE SWITCH
+  // ✅ MOBILE SWITCH
   if(window.innerWidth < 768){
-    document.getElementById("chatUserCol").classList.add("hide");
-    document.getElementById("chatAreaCol").classList.add("show");
+
+    document.getElementById("chatUserCol").classList.add("active");
+    document.getElementById("chatAreaCol").classList.add("active");
+
   }
 
   listenMsg();
-  listenTyping();
-  listenOnline();
 }
   
 function initTyping(){
@@ -2764,35 +2735,7 @@ listenOnline();
   function toggleSidebar(){
   document.querySelector(".sidebar").classList.toggle("active");
 }
-function openImage(src){
-  document.getElementById("imgPreview").style.display = "flex";
-  document.getElementById("previewImg").src = src;
-}
 
-function closeImage(){
-  document.getElementById("imgPreview").style.display = "none";
-}
-
-
-function backToUsers(){
-
-  document.getElementById("chatUserCol").classList.remove("hide");
-  document.getElementById("chatAreaCol").classList.remove("show");
-
-}
-
-function initEnterSend(){
-
-msgInput.addEventListener("keydown", function(e){
-
-  if(e.key === "Enter" && !e.shiftKey){
-    e.preventDefault();
-    sendMsg();
-  }
-
-});
-
-}
 
 function previewFile(src, type, name){
 
