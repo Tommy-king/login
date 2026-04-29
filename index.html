@@ -2322,105 +2322,58 @@ contentArea.innerHTML = `
 <div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
   <div class="row g-0 h-100">
 
-    <!-- ================= USER LIST ================= -->
-    <div class="col-md-4 border-end d-flex flex-column h-100">
-
-      <!-- HEADER -->
-      <div style="
-        padding:10px;
-        font-weight:bold;
-        background:#f0f2f5;
-        flex-shrink:0;
-      ">
-        Chats
-      </div>
-
-      <!-- USER LIST (SCROLLABLE) -->
-      <div id="msgUserList" style="
-        flex:1;
-        overflow-y:auto;
-      "></div>
-
+    <!-- USER LIST -->
+    <div id="userListArea" class="col-md-4 border-end d-flex flex-column h-100">
+      <div style="padding:10px;font-weight:bold;background:#f0f2f5;">Chats</div>
+      <div id="msgUserList" style="flex:1;overflow-y:auto;"></div>
     </div>
 
-    <!-- ================= CHAT AREA ================= -->
-    <div class="col-md-8 d-flex flex-column h-100">
+    <!-- CHAT AREA -->
+    <div id="chatArea" class="col-md-8 d-flex flex-column h-100">
 
-      <!-- HEADER (FIXED) -->
-      <div id="msgHeader" style="
-        padding:10px;
-        background:#f0f2f5;
-        border-bottom:1px solid #ccc;
-        font-weight:bold;
-        flex-shrink:0;
-      ">
-        Select user
+      <!-- HEADER -->
+      <div style="padding:10px;background:#f0f2f5;display:flex;gap:10px;">
+        <span onclick="goBack()">⬅</span>
+        <span id="msgHeader">Select user</span>
       </div>
 
-      <!-- TYPING -->
-      <div id="msgTyping" style="
-        font-size:12px;
-        color:gray;
-        padding-left:10px;
-        height:18px;
-        flex-shrink:0;
-      "></div>
+      <div id="msgTyping" style="font-size:12px;color:gray;height:18px;padding-left:10px;"></div>
 
-      <!-- CHAT BOX (SCROLLABLE) -->
-      <div id="msgBox" style="
-        flex:1;
-        overflow-y:auto;
-        padding:10px;
-        background:#e5ddd5;
-        scroll-behavior:smooth;
-      "></div>
+      <!-- CHAT -->
+      <div id="msgBox" style="flex:1;overflow-y:auto;padding:10px;background:#e5ddd5;"></div>
 
-      <!-- INPUT (FIXED FOOTER) -->
-      <div style="
-        padding:10px;
-        background:#f0f2f5;
-        display:flex;
-        gap:5px;
-        align-items:flex-end;
-        flex-shrink:0;
-      ">
-
-        <input type="file" id="msgFile" hidden>
-
-        <button onclick="document.getElementById('msgFile').click()">📎</button>
+      <!-- INPUT -->
+      <div style="padding:10px;background:#f0f2f5;display:flex;gap:5px;">
+        <button onclick="toggleEmoji()">😊</button>
+        <button onclick="msgFile.click()">📎</button>
 
         <textarea id="msgInput" placeholder="Type message"
-          style="
-            flex:1;
-            resize:none;
-            max-height:100px;
-            overflow-y:auto;
-          ">
-        </textarea>
+        style="flex:1;resize:none;max-height:100px;"></textarea>
 
         <button onclick="sendMsg()">➤</button>
 
+        <input type="file" id="msgFile" hidden>
+      </div>
+
+      <!-- EMOJI -->
+      <div id="emojiBox" style="display:none;padding:10px;background:#fff;">
+        😀 😁 😂 🤣 😊 😍 😎 😢 😡 👍 🙏 ❤️
       </div>
 
     </div>
-
   </div>
 </div>
 
-<!-- FILE PREVIEW MODAL -->
+<!-- FILE PREVIEW -->
 <div id="imgPreview" style="
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.9);
-  z-index:2000;
-  justify-content:center;
-  align-items:center;
-"></div>
-
+display:none;
+position:fixed;
+top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.9);
+z-index:2000;
+justify-content:center;
+align-items:center;">
+</div>
 `;
 
 /* INIT FUNCTIONS */
@@ -2432,53 +2385,45 @@ initTyping();
 }
 
 
+let msgUser = getLoggedUser().username;
 let msgReceiver = "";
-let msgUser = "";
+let replyMsg = null;
 
+/* TIME */
 function getISTTime(){
-let d = new Date();
-return d.toLocaleString("en-GB", {
-timeZone: "Asia/Kolkata",
-day: "2-digit",
-month: "2-digit",
-year: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-second: "2-digit"
-}).replace(",", "");
+return new Date().toLocaleString("en-GB",{timeZone:"Asia/Kolkata"});
 }
-  
-// LOAD USERS
+
+/* BACK */
+function goBack(){
+chatArea.style.display="none";
+userListArea.style.display="flex";
+}
+
+/* LOAD USERS */
 async function loadMsgUsers(){
 
 let users = await getUsers();
-let html = "";
+let snap = await get(ref(db,"messages"));
+let messages = snap.exists()?snap.val():{};
 
-const snap = await get(ref(db,"messages"));
-let messages = snap.exists() ? snap.val() : {};
+let html="";
 
 users.forEach(u=>{
+if(u.username!==msgUser){
 
-if(u.username !== msgUser){
-
-let unread = 0;
-let lastMsg = "";
-let lastTime = "";
+let unread=0,lastMsg="",lastTime="";
 
 Object.values(messages).forEach(m=>{
-
-if(m.sender === u.username && m.receiver === msgUser && m.status !== "seen"){
-unread++;
-}
+if(m.sender===u.username && m.receiver===msgUser && m.status!=="seen") unread++;
 
 if(
-(m.sender === msgUser && m.receiver === u.username) ||
-(m.sender === u.username && m.receiver === msgUser)
+(m.sender===msgUser && m.receiver===u.username) ||
+(m.sender===u.username && m.receiver===msgUser)
 ){
-lastMsg = m.text || (m.file ? "📎 File" : "");
+lastMsg = m.text || (m.file?"📎 File":"");
 lastTime = m.time;
 }
-
 });
 
 html += `
@@ -2490,30 +2435,40 @@ style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;jus
 <small>${lastMsg}</small>
 </div>
 
-<div style="text-align:right">
+<div>
 <small>${lastTime}</small><br>
-${unread>0 ? `<span style="background:green;color:white;border-radius:50%;padding:4px 8px">${unread}</span>` : ""}
+${unread?`<span style="background:green;color:#fff;padding:3px 6px;border-radius:10px">${unread}</span>`:""}
 </div>
 
-</div>
-`;
-
+</div>`;
 }
-
 });
 
-document.getElementById("msgUserList").innerHTML = html;
+msgUserList.innerHTML = html;
 }
-  
-// SEND MESSAGE
-function sendMsg(){
 
-if(!msgReceiver) return alert("Select user");
+/* SELECT USER */
+function selectMsgUser(user){
+
+msgReceiver = user;
+msgHeader.innerText = user;
+
+chatArea.style.display="flex";
+userListArea.style.display="none";
+
+listenMsg();
+listenTyping();
+listenOnline();
+}
+
+/* SEND */
+function sendMsg(){
 
 let text = msgInput.value.trim();
 let file = msgFile.files[0];
 
-if(!text && !file) return alert("Empty");
+if(!msgReceiver) return alert("Select user");
+if(!text && !file) return;
 
 let id = Date.now();
 
@@ -2524,216 +2479,182 @@ saveMsg(id,text,e.target.result,file.name,file.type);
 };
 reader.readAsDataURL(file);
 }else{
-saveMsg(id,text,"","","");
+saveMsg(id,text);
 }
 
 msgInput.value="";
 msgFile.value="";
 }
-  
 
-// SAVE
-function saveMsg(id,text,file,fileName,fileType){
+/* SAVE */
+function saveMsg(id,text,file="",name="",type=""){
 
 set(ref(db,"messages/"+id),{
 sender:msgUser,
 receiver:msgReceiver,
 text:text,
-file:file || "",
-fileName:fileName || "",
-fileType: fileType || (file ? file.type : ""),
+reply:replyMsg||"",
+file:file,
+fileName:name,
+fileType:type,
 time:getISTTime(),
 status:"sent"
 });
 
+replyMsg=null;
+msgInput.placeholder="Type message";
 }
 
+/* LISTEN */
 function listenMsg(){
 
 onValue(ref(db,"messages"), snap=>{
 
-let msgs = [];
+let html="";
 
 snap.forEach(c=>{
-msgs.push({id:c.key,...c.val()});
-});
-
-msgs.sort((a,b)=>a.id - b.id);
-
-let html = "";
-
-msgs.forEach(m=>{
+let m = c.val();
 
 if(
 (m.sender===msgUser && m.receiver===msgReceiver) ||
 (m.sender===msgReceiver && m.receiver===msgUser)
 ){
 
-let isMe = m.sender === msgUser;
+let isMe = m.sender===msgUser;
 
-// STATUS UPDATE
-if(m.receiver === msgUser){
-if(m.status==="sent") update(ref(db,"messages/"+m.id),{status:"delivered"});
+/* STATUS */
+if(m.receiver===msgUser){
+if(m.status==="sent") update(ref(db,"messages/"+c.key),{status:"delivered"});
 if(m.status!=="seen"){
-setTimeout(()=>{
-update(ref(db,"messages/"+m.id),{status:"seen"});
-},300);
+setTimeout(()=>update(ref(db,"messages/"+c.key),{status:"seen"}),300);
 }
 }
 
 html += `
-<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin:5px 0;">
+<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin:5px;">
 
 <div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
 
-${m.text || ""}
+${m.reply?`<div style="font-size:12px;background:#eee;padding:4px">${m.reply}</div>`:""}
 
-${m.file ? (
-m.fileType.startsWith("image")
-? `<br><img src="${m.file}" width="150">`
-: `<br><span style="cursor:pointer;color:blue"
-onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
-📄 ${m.fileName}
-</span>`
-) : ""}
+${m.text||""}
+
+${m.file?renderFile(m):""}
 
 <div style="font-size:10px;text-align:right">
 ${m.time} ${isMe?getTick(m.status):""}
 </div>
 
-</div>
-</div>
-`;
-}
+<div onclick="setReply('${m.text}')" style="font-size:11px;color:blue;cursor:pointer">Reply</div>
 
+</div>
+</div>`;
+}
 });
 
 msgBox.innerHTML = html;
-
-setTimeout(()=>{
 msgBox.scrollTop = msgBox.scrollHeight;
-},100);
-
-});
-}
-  
-function selectMsgUser(user){
-
-msgReceiver = user;
-msgHeader.innerText = user;
-
-listenMsg();
-listenTyping();
-listenOnline();
-}
-
-  
-function initTyping(){
-
-msgInput.addEventListener("input", ()=>{
-
-set(ref(db,"typing/"+msgReceiver),{
-from:msgUser,
-status:true
-});
-
-setTimeout(()=>{
-set(ref(db,"typing/"+msgReceiver),{status:false});
-},1000);
 
 });
 }
 
+/* FILE RENDER */
+function renderFile(m){
+
+if(m.fileType?.startsWith("image")){
+return `<br><img src="${m.file}" width="150" style="cursor:pointer"
+onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">`;
+}
+
+return `<br><span style="color:blue;cursor:pointer"
+onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
+📄 ${m.fileName}
+</span>`;
+}
+
+/* PREVIEW */
+function previewFile(src,type,name){
+
+let preview = imgPreview;
+
+let content="";
+
+/* IMAGE */
+if(type.startsWith("image") || src.startsWith("data:image")){
+content = `<img src="${src}" style="max-width:90%;max-height:90%">`;
+}
+
+/* PDF */
+else if(type.includes("pdf")){
+content = `<iframe src="${src}" style="width:90%;height:90%"></iframe>`;
+}
+
+/* TEXT */
+else if(type.includes("text") || type.includes("json") || type.includes("csv")){
+fetch(src).then(r=>r.text()).then(t=>{
+preview.innerHTML = `<pre style="color:white;width:80%;height:80%;overflow:auto">${t}</pre>`;
+});
+preview.style.display="flex";
+return;
+}
+
+/* DEFAULT */
+else{
+content = `<div style="color:white">Preview not supported<br>
+<a href="${src}" download="${name}" style="color:yellow">Download</a></div>`;
+}
+
+preview.innerHTML = `
+<div style="position:relative">
+${content}
+<span onclick="imgPreview.style.display='none'" style="position:absolute;top:10px;right:20px;color:white;font-size:25px;cursor:pointer">✖</span>
+</div>`;
+
+preview.style.display="flex";
+}
+
+/* REPLY */
+function setReply(text){
+replyMsg = text;
+msgInput.placeholder = "Replying: " + text;
+}
+
+/* EMOJI */
+function toggleEmoji(){
+emojiBox.style.display = emojiBox.style.display==="none"?"block":"none";
+}
+
+document.addEventListener("click",e=>{
+if(e.target.parentElement?.id==="emojiBox"){
+msgInput.value += e.target.innerText;
+}
+});
+
+/* MULTILINE */
+msgInput.addEventListener("keydown",e=>{
+if(e.key==="Enter" && !e.shiftKey){
+e.preventDefault();
+sendMsg();
+}
+});
+
+/* TYPING */
 function listenTyping(){
-
-onValue(ref(db,"typing/"+msgUser), snap=>{
-
-let d = snap.val();
-
-msgTyping.innerText = (d && d.status) ? d.from+" typing..." : "";
-
+onValue(ref(db,"typing/"+msgUser),snap=>{
+let d=snap.val();
+msgTyping.innerText = d?.status ? d.from+" typing..." : "";
 });
 }
 
+/* ONLINE */
 function listenOnline(){
-
-onValue(ref(db,"status/"+msgReceiver), snap=>{
-
-let s = snap.val();
-
-msgHeader.innerText = s?.online
-? msgReceiver+" (Online)"
-: msgReceiver+" (Last seen: "+s?.lastSeen+")";
-
+onValue(ref(db,"status/"+msgReceiver),snap=>{
+let s=snap.val();
+msgHeader.innerText = s?.online ? msgReceiver+" (Online)" : msgReceiver+" (Last seen: "+s?.lastSeen+")";
 });
 }
-function initTextarea(){
 
-msgInput.addEventListener("input", ()=>{
-msgInput.style.height = "auto";
-msgInput.style.height = msgInput.scrollHeight + "px";
-});
-
-}
-// SET ONLINE
-window.addEventListener("load",()=>{
-set(ref(db,"status/"+msgUser),{online:true});
-});
-
-// OFFLINE
-window.addEventListener("beforeunload",()=>{
-set(ref(db,"status/"+msgUser),{
-online:false,
-lastSeen:getISTTime()
-});
-});
-
-// PASTE IMAGE
-document.addEventListener("paste", e=>{
-
-let items = e.clipboardData.items;
-
-for(let item of items){
-
-if(item.type.indexOf("image")!==-1){
-
-let file = item.getAsFile();
-let reader = new FileReader();
-
-reader.onload = function(evt){
-saveMsg(Date.now(),"",evt.target.result);
-};
-
-reader.readAsDataURL(file);
-
-}
-
-}
-
-});
-
-  function listenMessageNotifications(){
-
-const user = getLoggedUser().username;
-
-onValue(ref(db,"messages"), snap=>{
-
-let count = 0;
-
-snap.forEach(child=>{
-let m = child.val();
-
-if(m.receiver === user && m.status !== "seen"){
-count++;
-}
-});
-
-document.getElementById("notifyCount").innerText = count;
-
-});
-
-}
-
+/* STATUS */
 function getTick(status){
 if(status==="sent") return "✓";
 if(status==="delivered") return "✓✓";
@@ -2741,164 +2662,9 @@ if(status==="seen") return "<span style='color:blue'>✓✓</span>";
 return "";
 }
 
-
-  function listenUserList(){
-onValue(ref(db,"messages"), ()=> loadMsgUsers());
-}
+/* INIT */
+loadMsgUsers();
   
-function selectMsgUser(user){
-
-msgReceiver = user;
-
-document.getElementById("msgHeader").innerText = user;
-
-// Optional: highlight selected user
-document.querySelectorAll("#msgUserList > div").forEach(d=>{
-d.style.background = "";
-});
-event.currentTarget.style.background = "#f1f5f9";
-
-listenMsg();
-listenTyping();
-listenOnline();
-} 
-
-  function toggleSidebar(){
-  document.querySelector(".sidebar").classList.toggle("active");
-}
-function openImage(src){
-  document.getElementById("imgPreview").style.display = "flex";
-  document.getElementById("previewImg").src = src;
-}
-
-function closeImage(){
-  document.getElementById("imgPreview").style.display = "none";
-}
-
-function previewFile(src, type, name){
-
-  let preview = document.getElementById("imgPreview");
-
-  // 🔥 FIX: detect type properly
-  let fileType = type || "";
-
-  let content = "";
-
-  // ✅ IMAGE (strong detection)
-  if(fileType.startsWith("image") || src.startsWith("data:image")){
-    
-    content = `
-      <img src="${src}" 
-      style="max-width:90%; max-height:90%; border-radius:10px;">
-      
-      <br><br>
-      <a href="${src}" download="${name}" style="color:yellow">Download</a>
-    `;
-  }
-
-  // ✅ PDF
-  else if(fileType.includes("pdf")){
-    
-    content = `
-      <iframe src="${src}" style="width:90%;height:90%"></iframe>
-      <br>
-      <a href="${src}" download="${name}" style="color:yellow">Download</a>
-    `;
-  }
-
-  // ✅ TEXT / CODE / CSV
-  else if(fileType.includes("text") || fileType.includes("json") || fileType.includes("csv")){
-    
-    fetch(src)
-    .then(res => res.text())
-    .then(text => {
-      preview.innerHTML = `
-        <div style="color:white; width:80%; height:80%; overflow:auto;">
-          <pre>${text}</pre>
-          <br>
-          <a href="${src}" download="${name}" style="color:yellow">Download</a>
-        </div>
-        <span onclick="closeImage()" style="
-          position:absolute;top:20px;right:30px;
-          color:white;font-size:30px;cursor:pointer;">✖</span>
-      `;
-    });
-
-    preview.style.display = "flex";
-    return;
-  }
-
-  // ✅ DEFAULT (ALL FILES fallback)
-  else {
-    content = `
-      <div style="color:white;text-align:center">
-        <h3>Preview not supported</h3>
-        <a href="${src}" download="${name}" style="color:yellow">Download File</a>
-      </div>
-    `;
-  }
-
-  // COMMON UI
-  preview.innerHTML = `
-    <div style="
-      position:relative;
-      width:100%;
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-    ">
-      ${content}
-
-      <span onclick="closeImage()" style="
-        position:absolute;
-        top:20px;
-        right:30px;
-        color:white;
-        font-size:30px;
-        cursor:pointer;
-      ">✖</span>
-    </div>
-  `;
-
-  preview.style.display = "flex";
-}
-
-  
-</script>
-
-
-
-  
-<div id="imgPreview" style="
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.9);
-z-index:2000;
-justify-content:center;
-align-items:center;
-">
-
-<img id="previewImg" style="
-max-width:90%;
-max-height:90%;
-border-radius:8px;
-">
-
-<span onclick="closeImage()" style="
-position:absolute;
-top:20px;
-right:30px;
-color:white;
-font-size:30px;
-cursor:pointer;
-font-weight:bold;
-">✖</span>
 
 </div>
 </body>
