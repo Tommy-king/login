@@ -138,6 +138,7 @@ cursor:grab;
 
 @media (max-width: 768px){
 
+  
     .row.g-0{
     flex-direction:column;
   }
@@ -195,6 +196,18 @@ cursor:grab;
   height:100%;
   scroll-behavior:smooth;
 }
+
+  #msgBox div{
+  white-space: pre-wrap;
+}
+
+    #chatUserCol.hide{
+    display:none !important;
+  }
+
+  #chatAreaCol.hide{
+    display:none !important;
+  }
 }
 </style>
 </head>
@@ -2323,7 +2336,7 @@ contentArea.innerHTML = `
   <div class="row g-0 h-100">
 
     <!-- ================= USER LIST ================= -->
-    <div class="col-md-4 border-end d-flex flex-column h-100">
+   <div id="chatUserCol" class="col-md-4 border-end d-flex flex-column h-100">
 
       <!-- HEADER -->
       <div style="
@@ -2344,9 +2357,6 @@ contentArea.innerHTML = `
     </div>
 
     <!-- ================= CHAT AREA ================= -->
-    <div class="col-md-8 d-flex flex-column h-100">
-
-      <!-- HEADER (FIXED) -->
       <div id="msgHeader" style="
         padding:10px;
         background:#f0f2f5;
@@ -2354,7 +2364,14 @@ contentArea.innerHTML = `
         font-weight:bold;
         flex-shrink:0;
       ">
-        Select user
+      
+        <span onclick="backToUsers()" 
+              style="cursor:pointer;margin-right:10px;font-size:18px;">
+              ⬅
+        </span>
+      
+        <span id="msgHeaderName">Select user</span>
+      
       </div>
 
       <!-- TYPING -->
@@ -2586,7 +2603,7 @@ html += `
 
 <div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
 
-${m.text || ""}
+${(m.text || "").replace(/\n/g,"<br>")}
 
 ${m.file ? (
 m.fileType.startsWith("image")
@@ -2619,12 +2636,19 @@ msgBox.scrollTop = msgBox.scrollHeight;
   
 function selectMsgUser(user){
 
-msgReceiver = user;
-msgHeader.innerText = user;
+  msgReceiver = user;
 
-listenMsg();
-listenTyping();
-listenOnline();
+  document.getElementById("msgHeaderName").innerText = user;
+
+  // ✅ MOBILE SWITCH
+  if(window.innerWidth < 768){
+    document.getElementById("chatUserCol").classList.add("hide");
+    document.getElementById("chatAreaCol").classList.remove("hide");
+  }
+
+  listenMsg();
+  listenTyping();
+  listenOnline();
 }
 
   
@@ -2774,6 +2798,13 @@ function openImage(src){
 function closeImage(){
   document.getElementById("imgPreview").style.display = "none";
 }
+
+
+function backToUsers(){
+  document.getElementById("chatUserCol").classList.remove("hide");
+  document.getElementById("chatAreaCol").classList.add("hide");
+}
+  
 
 function previewFile(src, type, name){
 
