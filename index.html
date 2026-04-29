@@ -138,7 +138,15 @@ cursor:grab;
 
 @media (max-width: 768px){
 
-  /* Sidebar */
+    .row.g-0{
+    flex-direction:column;
+  }
+
+  #msgUserList{
+    height:150px;
+  }
+  
+  /* Sidebar hidden by default */
   .sidebar{
     position: fixed;
     left: -220px;
@@ -150,7 +158,7 @@ cursor:grab;
     left: 0;
   }
 
-  /* Content */
+  /* Content full width */
   .content{
     margin-left: 0 !important;
   }
@@ -162,7 +170,7 @@ cursor:grab;
     padding: 10px;
   }
 
-  /* Ribbon scroll */
+  /* Ribbon scroll (horizontal) */
   .ribbon{
     width: 100%;
     overflow-x: auto;
@@ -174,23 +182,28 @@ cursor:grab;
     margin: 3px;
   }
 
-  /* Chat scroll fix */
-  #msgUserList{
-    overflow-y:auto;
-  }
-
-  #msgBox{
-    overflow-y:auto;
-    scroll-behavior:smooth;
-  }
-
+  /* Message layout stack */
+#msgUserList{
+  overflow-y:auto;
+  height:100%;
+}
+#msgUserList div:hover{
+  background:#f5f5f5;
+}
+#msgBox{
+  overflow-y:auto;
+  height:100%;
+  scroll-behavior:smooth;
+}
   body {
-    overflow-x: hidden;
-  }
-
+  overflow: hidden;
+}
+  .row {
+  height: 100%;
 }
 
- </style>
+}
+</style>
 </head>
 <body>
 
@@ -2314,44 +2327,41 @@ msgUser = getLoggedUser().username;
 contentArea.innerHTML = `
 
 <div class="card p-0" style="height:calc(100vh - 80px); overflow:hidden;">
-  
-  <div class="row g-0 h-100 position-relative">
+  <div class="row g-0 h-100">
 
     <!-- ================= USER LIST ================= -->
-    <div id="userPanel" class="col-12 col-md-4 border-end d-flex flex-column h-100">
-
-      <div style="padding:10px;font-weight:bold;background:#f0f2f5;">
-        Chats
-      </div>
-
-      <div id="msgUserList" style="flex:1;overflow-y:auto;"></div>
-
-    </div>
-
-    <!-- ================= CHAT PANEL ================= -->
-    <div id="chatPanel" class="col-12 col-md-8 d-flex flex-column h-100"
-      style="
-        position:absolute;
-        top:0;
-        left:100%;
-        width:100%;
-        background:white;
-        transition:0.3s;
-        z-index:5;
-      ">
+    <div class="col-md-4 border-end d-flex flex-column h-100">
 
       <!-- HEADER -->
       <div style="
         padding:10px;
+        font-weight:bold;
+        background:#f0f2f5;
+        flex-shrink:0;
+      ">
+        Chats
+      </div>
+
+      <!-- USER LIST (SCROLLABLE) -->
+      <div id="msgUserList" style="
+        flex:1;
+        overflow-y:auto;
+      "></div>
+
+    </div>
+
+    <!-- ================= CHAT AREA ================= -->
+    <div class="col-md-8 d-flex flex-column h-100">
+
+      <!-- HEADER (FIXED) -->
+      <div id="msgHeader" style="
+        padding:10px;
         background:#f0f2f5;
         border-bottom:1px solid #ccc;
         font-weight:bold;
-        display:flex;
-        align-items:center;
-        gap:10px;
+        flex-shrink:0;
       ">
-        <button id="backBtn" onclick="backToUsers()" style="display:none;">⬅</button>
-        <span id="msgHeaderText">Select user</span>
+        Select user
       </div>
 
       <!-- TYPING -->
@@ -2360,23 +2370,26 @@ contentArea.innerHTML = `
         color:gray;
         padding-left:10px;
         height:18px;
+        flex-shrink:0;
       "></div>
 
-      <!-- CHAT BOX -->
+      <!-- CHAT BOX (SCROLLABLE) -->
       <div id="msgBox" style="
         flex:1;
         overflow-y:auto;
         padding:10px;
         background:#e5ddd5;
+        scroll-behavior:smooth;
       "></div>
 
-      <!-- INPUT -->
+      <!-- INPUT (FIXED FOOTER) -->
       <div style="
         padding:10px;
         background:#f0f2f5;
         display:flex;
         gap:5px;
         align-items:flex-end;
+        flex-shrink:0;
       ">
 
         <input type="file" id="msgFile" hidden>
@@ -2384,7 +2397,13 @@ contentArea.innerHTML = `
         <button onclick="document.getElementById('msgFile').click()">📎</button>
 
         <textarea id="msgInput" placeholder="Type message"
-          style="flex:1;resize:none;max-height:100px;"></textarea>
+          style="
+            flex:1;
+            resize:none;
+            max-height:100px;
+            overflow-y:auto;
+          ">
+        </textarea>
 
         <button onclick="sendMsg()">➤</button>
 
@@ -2411,14 +2430,13 @@ contentArea.innerHTML = `
 
 `;
 
-/* INIT */
+/* INIT FUNCTIONS */
 loadMsgUsers();
 listenUserList();
 initTextarea();
 initTyping();
 
 }
-  
 
 
 let msgReceiver = "";
@@ -2439,9 +2457,7 @@ second: "2-digit"
   
 // LOAD USERS
 async function loadMsgUsers(){
-let el = document.getElementById("msgUserList");
-if(el) el.innerHTML = html;
-  
+
 let users = await getUsers();
 let html = "";
 
@@ -2498,9 +2514,7 @@ document.getElementById("msgUserList").innerHTML = html;
   
 // SEND MESSAGE
 function sendMsg(){
-let msgInput = document.getElementById("msgInput");
-let msgFile = document.getElementById("msgFile");
-  
+
 if(!msgReceiver) return alert("Select user");
 
 let text = msgInput.value.trim();
@@ -2543,8 +2557,6 @@ status:"sent"
 
 function listenMsg(){
 
-let msgBox = document.getElementById("msgBox");
-if(!msgBox) return;
 onValue(ref(db,"messages"), snap=>{
 
 let msgs = [];
@@ -2581,7 +2593,7 @@ html += `
 
 <div style="background:${isMe?'#dcf8c6':'#fff'};padding:8px;border-radius:10px;max-width:70%">
 
-${(m.text || "").replace(/\n/g, "<br>")}
+${m.text || ""}
 
 ${m.file ? (
 m.fileType.startsWith("image")
@@ -2614,25 +2626,17 @@ msgBox.scrollTop = msgBox.scrollHeight;
   
 function selectMsgUser(user){
 
-  msgReceiver = user;
+msgReceiver = user;
+msgHeader.innerText = user;
 
-  // ✅ correct ID
-  document.getElementById("msgHeaderText").innerText = user;
-
-  // ✅ show chat panel
-  document.getElementById("chatPanel").style.left = "0";
-
-  // ✅ show back button (mobile)
-  document.getElementById("backBtn").style.display = "inline-block";
-
-  listenMsg();
-  listenTyping();
-  listenOnline();
+listenMsg();
+listenTyping();
+listenOnline();
 }
 
   
 function initTyping(){
-let msgInput = document.getElementById("msgInput");
+
 msgInput.addEventListener("input", ()=>{
 
 set(ref(db,"typing/"+msgReceiver),{
@@ -2664,18 +2668,12 @@ onValue(ref(db,"status/"+msgReceiver), snap=>{
 
 let s = snap.val();
 
-let header = document.getElementById("msgHeaderText");
-
-if(header){
-  header.innerText = s?.online
-  ? msgReceiver + " (Online)"
-  : msgReceiver + " (Last seen: " + (s?.lastSeen || "-") + ")";
-}
+msgHeader.innerText = s?.online
+? msgReceiver+" (Online)"
+: msgReceiver+" (Last seen: "+s?.lastSeen+")";
 
 });
 }
-  
-  
 function initTextarea(){
 
 msgInput.addEventListener("input", ()=>{
@@ -2757,19 +2755,20 @@ onValue(ref(db,"messages"), ()=> loadMsgUsers());
   
 function selectMsgUser(user){
 
-  msgReceiver = user;
+msgReceiver = user;
 
-  document.getElementById("msgHeaderText").innerText = user;
+document.getElementById("msgHeader").innerText = user;
 
-  // ✅ slide chat panel (THIS WAS MISSING)
-  document.getElementById("chatPanel").style.left = "0";
+// Optional: highlight selected user
+document.querySelectorAll("#msgUserList > div").forEach(d=>{
+d.style.background = "";
+});
+event.currentTarget.style.background = "#f1f5f9";
 
-  document.getElementById("backBtn").style.display = "inline-block";
-
-  listenMsg();
-  listenTyping();
-  listenOnline();
-}
+listenMsg();
+listenTyping();
+listenOnline();
+} 
 
   function toggleSidebar(){
   document.querySelector(".sidebar").classList.toggle("active");
@@ -2871,10 +2870,6 @@ function previewFile(src, type, name){
   `;
 
   preview.style.display = "flex";
-}
-
-  function backToUsers(){
-  document.getElementById("chatPanel").style.left = "100%";
 }
 
   
