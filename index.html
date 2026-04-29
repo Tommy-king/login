@@ -201,13 +201,19 @@ cursor:grab;
   white-space: pre-wrap;
 }
 
-    #chatUserCol.hide{
+  #chatUserCol.hide{
     display:none !important;
   }
 
-  #chatAreaCol.hide{
-    display:none !important;
+  #chatAreaCol{
+    display:none;
   }
+
+  #chatAreaCol.show{
+    display:flex !important;
+  }
+
+  
 }
 </style>
 </head>
@@ -2336,87 +2342,62 @@ contentArea.innerHTML = `
   <div class="row g-0 h-100">
 
     <!-- ================= USER LIST ================= -->
-   <div id="chatUserCol" class="col-md-4 border-end d-flex flex-column h-100">
+    <div id="chatUserCol" class="col-md-4 border-end d-flex flex-column h-100">
 
-      <!-- HEADER -->
-      <div style="
-        padding:10px;
-        font-weight:bold;
-        background:#f0f2f5;
-        flex-shrink:0;
-      ">
+      <div style="padding:10px;font-weight:bold;background:#f0f2f5;">
         Chats
       </div>
 
-      <!-- USER LIST (SCROLLABLE) -->
-      <div id="msgUserList" style="
-        flex:1;
-        overflow-y:auto;
-      "></div>
+      <div id="msgUserList" style="flex:1;overflow-y:auto;"></div>
 
     </div>
 
     <!-- ================= CHAT AREA ================= -->
+    <div id="chatAreaCol" class="col-md-8 d-flex flex-column h-100">
+
+      <!-- HEADER -->
       <div id="msgHeader" style="
         padding:10px;
         background:#f0f2f5;
         border-bottom:1px solid #ccc;
         font-weight:bold;
-        flex-shrink:0;
       ">
-      
         <span onclick="backToUsers()" 
               style="cursor:pointer;margin-right:10px;font-size:18px;">
               ⬅
         </span>
-      
+
         <span id="msgHeaderName">Select user</span>
-      
       </div>
 
       <!-- TYPING -->
-      <div id="msgTyping" style="
-        font-size:12px;
-        color:gray;
-        padding-left:10px;
-        height:18px;
-        flex-shrink:0;
-      "></div>
+      <div id="msgTyping" style="font-size:12px;color:gray;padding-left:10px;height:18px;"></div>
 
-      <!-- CHAT BOX (SCROLLABLE) -->
+      <!-- CHAT BOX -->
       <div id="msgBox" style="
         flex:1;
         overflow-y:auto;
         padding:10px;
         background:#e5ddd5;
-        scroll-behavior:smooth;
+        white-space:pre-wrap;
       "></div>
 
-      <!-- INPUT (FIXED FOOTER) -->
+      <!-- INPUT -->
       <div style="
         padding:10px;
         background:#f0f2f5;
         display:flex;
         gap:5px;
         align-items:flex-end;
-        flex-shrink:0;
       ">
-
         <input type="file" id="msgFile" hidden>
 
         <button onclick="document.getElementById('msgFile').click()">📎</button>
 
         <textarea id="msgInput" placeholder="Type message"
-          style="
-            flex:1;
-            resize:none;
-            max-height:100px;
-            overflow-y:auto;
-          ">
-        </textarea>
+          style="flex:1;resize:none;max-height:100px;"></textarea>
 
         <button onclick="sendMsg()">➤</button>
-
       </div>
 
     </div>
@@ -2424,27 +2405,14 @@ contentArea.innerHTML = `
   </div>
 </div>
 
-<!-- FILE PREVIEW MODAL -->
-<div id="imgPreview" style="
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.9);
-  z-index:2000;
-  justify-content:center;
-  align-items:center;
-"></div>
-
 `;
 
-/* INIT FUNCTIONS */
+/* INIT */
 loadMsgUsers();
 listenUserList();
 initTextarea();
 initTyping();
+initEnterSend();
 
 }
 
@@ -2499,7 +2467,7 @@ lastTime = m.time;
 });
 
 html += `
-<div onclick="selectMsgUser('${u.username}')"
+<div onclick="selectMsgUser('${u.username}', event)"
 style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between">
 
 <div>
@@ -2634,23 +2602,29 @@ msgBox.scrollTop = msgBox.scrollHeight;
 });
 }
   
-function selectMsgUser(user){
+function selectMsgUser(user, e){
 
   msgReceiver = user;
 
   document.getElementById("msgHeaderName").innerText = user;
 
-  // ✅ MOBILE SWITCH
+  // highlight
+  document.querySelectorAll("#msgUserList > div").forEach(d=>{
+    d.style.background = "";
+  });
+
+  if(e) e.currentTarget.style.background = "#f1f5f9";
+
+  // MOBILE SWITCH
   if(window.innerWidth < 768){
     document.getElementById("chatUserCol").classList.add("hide");
-    document.getElementById("chatAreaCol").classList.remove("hide");
+    document.getElementById("chatAreaCol").classList.add("show");
   }
 
   listenMsg();
   listenTyping();
   listenOnline();
 }
-
   
 function initTyping(){
 
@@ -2801,10 +2775,24 @@ function closeImage(){
 
 
 function backToUsers(){
+
   document.getElementById("chatUserCol").classList.remove("hide");
-  document.getElementById("chatAreaCol").classList.add("hide");
+  document.getElementById("chatAreaCol").classList.remove("show");
+
 }
-  
+
+function initEnterSend(){
+
+msgInput.addEventListener("keydown", function(e){
+
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendMsg();
+  }
+
+});
+
+}
 
 function previewFile(src, type, name){
 
