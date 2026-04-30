@@ -2541,7 +2541,7 @@ receiver:msgReceiver,
 text:text,
 file:file || "",
 fileName:fileName || "",
-fileType: fileType || (file ? file.type : ""),
+fileType: fileType || "",
 time:getISTTime(),
 status:"sent"
 });
@@ -2590,7 +2590,11 @@ ${(m.text || "").replace(/\n/g,"<br>")}
 
 ${m.file ? (
 m.fileType.startsWith("image")
-? `<br><img src="${m.file}" width="150">`
+? `<br>
+<img src="${m.file}" width="150" 
+style="cursor:pointer;border-radius:8px"
+onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
+`
 : `<br><span style="cursor:pointer;color:blue"
 onclick="previewFile('${m.file}','${m.fileType}','${m.fileName}')">
 📄 ${m.fileName}
@@ -2617,33 +2621,6 @@ msgBox.scrollTop = msgBox.scrollHeight;
 });
 }
   
-function selectMsgUser(user){
-
-msgReceiver = user;
-msgHeader.innerText = user;
-
-listenMsg();
-listenTyping();
-listenOnline();
-}
-
-  
-function initTyping(){
-
-msgInput.addEventListener("input", ()=>{
-
-set(ref(db,"typing/"+msgReceiver),{
-from:msgUser,
-status:true
-});
-
-setTimeout(()=>{
-set(ref(db,"typing/"+msgReceiver),{status:false});
-},1000);
-
-});
-}
-
 function listenTyping(){
 
 onValue(ref(db,"typing/"+msgUser), snap=>{
@@ -2688,28 +2665,39 @@ lastSeen:getISTTime()
 });
 });
 
-// PASTE IMAGE
-document.addEventListener("paste", e=>{
 
-let items = e.clipboardData.items;
+// ✅ PASTE IMAGE (FIXED)
+document.addEventListener("paste", e => {
 
-for(let item of items){
+  if (!msgReceiver) {
+    alert("Select user first");
+    return;
+  }
 
-if(item.type.indexOf("image")!==-1){
+  let items = e.clipboardData.items;
 
-let file = item.getAsFile();
-let reader = new FileReader();
+  for (let item of items) {
 
-reader.onload = function(evt){
-saveMsg(Date.now(),"",evt.target.result);
-};
+    if (item.type.indexOf("image") !== -1) {
 
-reader.readAsDataURL(file);
+      let file = item.getAsFile();
+      let reader = new FileReader();
 
-}
+      reader.onload = function (evt) {
 
-}
+        saveMsg(
+          Date.now(),
+          "",
+          evt.target.result,
+          "pasted-image.png",
+          file.type
+        );
 
+      };
+
+      reader.readAsDataURL(file);
+    }
+  }
 });
 
   function listenMessageNotifications(){
@@ -2766,15 +2754,8 @@ listenOnline();
   function toggleSidebar(){
   document.querySelector(".sidebar").classList.toggle("active");
 }
-function openImage(src){
-  document.getElementById("imgPreview").style.display = "flex";
-  document.getElementById("previewImg").src = src;
-}
 
-function closeImage(){
-  document.getElementById("imgPreview").style.display = "none";
-}
-
+  
 function previewFile(src, type, name){
 
   let preview = document.getElementById("imgPreview");
