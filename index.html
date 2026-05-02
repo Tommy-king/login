@@ -1096,60 +1096,49 @@ return `${day}-${month}-${year}`;
 
 
 // LOAD TASKS
-async function loadTasks(){
+function loadTasks(){
 
-const snapshot = await get(ref(db,"tasks"));
+const loggedUser = getLoggedUser();
 
-let data=[];
-let loggedUser = getLoggedUser();
+onValue(ref(db,"tasks"), snapshot => {
+
+let data = [];
 
 snapshot.forEach(child=>{
 
 let t = child.val();
 
-// ⭐ USER FILTER
 if(loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username){
-return; // skip other users tasks
+return;
 }
 
-let commentCount = t.comments ? t.comments.length : 0;
-
 data.push([
-t.title,
-t.priority,
+t.title || "",
+t.priority || "",
 formatDate(t.due),
-
 `<span onclick="changeStatus('${t.id}','${t.status}')"
-style="cursor:pointer;${statusColor(t.status)}">
-${t.status}
-</span>`,
-
+style="cursor:pointer;${statusColor(t.status)}">${t.status}</span>`,
 t.completedDate || "-",
-t.assignedTo,
+t.assignedTo || "",
 t.assignedBy || "-",
 calculateDays(t.due,t.completedDate),
-
-`<span onclick="taskComments('${t.id}')"
-style="cursor:pointer;color:#2563eb">
-<i class="fa fa-comment"></i> ${commentCount}
+`<span onclick="taskComments('${t.id}')">
+<i class="fa fa-comment"></i> ${t.comments ? t.comments.length : 0}
 </span>`,
-
-`
-<i class="fa fa-edit action"
-onclick="editTask('${t.id}')"></i>
-
-<i class="fa fa-trash action"
-onclick="deleteTask('${t.id}')"></i>
-`
+`<i class="fa fa-edit action" onclick="editTask('${t.id}')"></i>
+ <i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>`
 ]);
 
 });
 
+// SAFE UPDATE
+if(taskTable){
 taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
-taskTable.columns.adjust();
+}
 
+});
 }
   
 
@@ -2620,6 +2609,7 @@ msgBox.scrollTop = msgBox.scrollHeight;
 
 });
 }
+  
   
 function listenTyping(){
 
