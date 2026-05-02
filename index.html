@@ -2401,14 +2401,49 @@ second: "2-digit"
 }).replace(",", "");
 }
   
-// LOAD USERS
-async function loadMsgUsers(){
+function initTyping(){
 
-let users = await getUsers();
+let input = document.getElementById("msgInput");
+
+if(!input) return;
+
+input.addEventListener("input", ()=>{
+
+if(!msgReceiver) return;
+
+set(ref(db,"typing/"+msgReceiver),{
+from: msgUser,
+status: true
+});
+
+// stop typing after 1 sec
+setTimeout(()=>{
+set(ref(db,"typing/"+msgReceiver),{
+from: msgUser,
+status: false
+});
+},1000);
+
+});
+
+}  
+
+  
+// LOAD USERS
+function loadMsgUsers(){
+
+// ✅ remove old listener
+if(window.msgUserListener) window.msgUserListener();
+
+// ✅ listen users + messages in real-time
+window.msgUserListener = onValue(ref(db), snapshot => {
+
 let html = "";
 
-const snap = await get(ref(db,"messages"));
-let messages = snap.exists() ? snap.val() : {};
+let dbData = snapshot.exists() ? snapshot.val() : {};
+
+let users = dbData.users ? Object.values(dbData.users) : [];
+let messages = dbData.messages ? dbData.messages : {};
 
 users.forEach(u=>{
 
@@ -2416,24 +2451,33 @@ if(u.username !== msgUser){
 
 let unread = 0;
 let lastMsg = "";
-let lastTime = "";
+let lastTime = 0;
 
+// ✅ process messages
 Object.values(messages).forEach(m=>{
 
+// unread count
 if(m.sender === u.username && m.receiver === msgUser && m.status !== "seen"){
 unread++;
 }
 
+// last message
 if(
 (m.sender === msgUser && m.receiver === u.username) ||
 (m.sender === u.username && m.receiver === msgUser)
 ){
+if(m.time > lastTime){
 lastMsg = m.text || (m.file ? "📎 File" : "");
 lastTime = m.time;
+}
 }
 
 });
 
+// format time
+let timeText = lastTime ? new Date(lastTime).toLocaleTimeString() : "";
+
+// ✅ UI
 html += `
 <div onclick="selectMsgUser('${u.username}')"
 style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between">
@@ -2444,7 +2488,7 @@ style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;jus
 </div>
 
 <div style="text-align:right">
-<small>${lastTime}</small><br>
+<small>${timeText}</small><br>
 ${unread>0 ? `<span style="background:green;color:white;border-radius:50%;padding:4px 8px">${unread}</span>` : ""}
 </div>
 
@@ -2455,7 +2499,11 @@ ${unread>0 ? `<span style="background:green;color:white;border-radius:50%;paddin
 
 });
 
+// ✅ instant render
 document.getElementById("msgUserList").innerHTML = html;
+
+});
+
 }
   
 // SEND MESSAGE
