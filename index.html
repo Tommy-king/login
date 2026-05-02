@@ -871,7 +871,6 @@ display.value = "";
   // ...........To do list ...................//
 function openTodoPage(){
 
-// ✅ 1. SHOW UI INSTANTLY (no waiting for Firebase)
 contentArea.innerHTML = `
 
 <div class="card">
@@ -907,57 +906,110 @@ contentArea.innerHTML = `
 
 </div>
 
-<table id="todoTable" class="table table-bordered table-striped w-100">
+<div class="mb-3">
+<button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
+<button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
+</div>
+
+<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
+
 <thead class="table-dark">
+
 <tr>
 <th>Task</th>
 <th>Priority</th>
 <th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>Assigned To</th>
+<th>Assigned to</th>
 <th>Assigned By</th>
-<th>Days</th>
+<th>No. of Days</th>
 <th>Comment</th>
 <th>Actions</th>
 </tr>
+
+<tr>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th><input class="form-control form-control-sm"></th>
+<th></th>
+<th></th>
+</tr>
+
 </thead>
-<tbody></tbody>
+
+<tbody id="taskTable"></tbody>
+
 </table>
 
 </div>
 </div>
+
 `;
+  
+  taskTable = $('#todoTable').DataTable({
+  
+  pageLength:10,
+  lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+  
+  paging:true,
+  orderCellsTop:true,
+  
+  autoWidth:false,
+  responsive:false,
+  
+  dom:'Blfrtip',
+  
+  buttons:[
+  'colvis',
+  {extend:'excel',title:'Task_Report'},
+  {extend:'csv',title:'Task_Report'},
+  {extend:'print'}
+  ],
+  
+  initComplete:function(){
+  
+  let api=this.api();
+  
+  api.columns().every(function(index){
+  
+  let column=this;
+  
+  $('input', api.table().header().rows[1].cells[index])
+  .on('keyup change clear',function(){
+  
+  column.search(this.value,true,false).draw();
+  
+  });
+  
+  });
+  
+  }
+  
+  });
 
 
-// ✅ 2. DESTROY OLD TABLE (important)
-if ($.fn.DataTable.isDataTable('#todoTable')) {
-    $('#todoTable').DataTable().destroy();
-}
+// ⭐ PASTE STATUS FILTER CODE HERE
+$('#todoTable thead tr:eq(1) th:eq(3) input').on('keyup change', function () {
 
+    let val = this.value;
 
-// ✅ 3. INIT TABLE IMMEDIATELY
-taskTable = $('#todoTable').DataTable({
-pageLength:10,
-lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
-scrollY:"400px",
-scrollCollapse:true,
-paging:true,
-fixedHeader:true,
-autoWidth:false
+    taskTable.column(3)
+        .search(val ? val : '', true, false)
+        .draw();
+
 });
 
 
-// ✅ 4. LOAD USERS (dropdown)
 loadUsersForAssign();
-
-
-// ✅ 5. START REAL-TIME LISTENER (MAIN ENGINE)
-listenTasks();
-
+loadTasks();
 }
-  
-  // LOAD USERS INTO ASSIGN DROPDOWN
+// LOAD USERS INTO ASSIGN DROPDOWN
 async function loadUsersForAssign(){
 
 let loggedUser=getLoggedUser();
@@ -1023,7 +1075,7 @@ async function addTask() {
   Swal.fire("Success", "Task created", "success");
   await writeAuditLog("Task Manager","Add Task ("+title+")");
 
-  listenTasks();
+  loadTasks();
 }
   
 
@@ -1044,32 +1096,27 @@ return `${day}-${month}-${year}`;
 
 
 // LOAD TASKS
-function listenTasks(){
+async function loadTasks(){
 
+const snapshot = await get(ref(db,"tasks"));
+
+let data=[];
 let loggedUser = getLoggedUser();
 
-// ✅ REMOVE OLD LISTENER (VERY IMPORTANT)
-if(window.taskListener) window.taskListener();
-
-// ✅ REAL-TIME LISTENING
-window.taskListener = onValue(ref(db,"tasks"), snapshot => {
-
-let data = [];
-
-snapshot.forEach(child => {
+snapshot.forEach(child=>{
 
 let t = child.val();
 
-// role filter
+// ⭐ USER FILTER
 if(loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username){
-return;
+return; // skip other users tasks
 }
 
 let commentCount = t.comments ? t.comments.length : 0;
 
 data.push([
-t.title || "",
-t.priority || "",
+t.title,
+t.priority,
 formatDate(t.due),
 
 `<span onclick="changeStatus('${t.id}','${t.status}')"
@@ -1078,35 +1125,35 @@ ${t.status}
 </span>`,
 
 t.completedDate || "-",
-t.assignedTo || "",
+t.assignedTo,
 t.assignedBy || "-",
 calculateDays(t.due,t.completedDate),
 
-`<span onclick="taskComments('${t.id}')">
+`<span onclick="taskComments('${t.id}')"
+style="cursor:pointer;color:#2563eb">
 <i class="fa fa-comment"></i> ${commentCount}
 </span>`,
 
-`<i class="fa fa-edit action" onclick="editTask('${t.id}')"></i>
- <i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>`
+`
+<i class="fa fa-edit action"
+onclick="editTask('${t.id}')"></i>
+
+<i class="fa fa-trash action"
+onclick="deleteTask('${t.id}')"></i>
+`
 ]);
 
 });
 
-
-// ✅ INSTANT UI UPDATE (no delay)
-if(taskTable){
 taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
-}
-
-});
+taskTable.columns.adjust();
 
 }
+  
 
-  
-  
-async function changeStatus(id,currentStatus){
+  async function changeStatus(id,currentStatus){
 
 const { value: status } = await Swal.fire({
 title:"Update Status",
@@ -1140,7 +1187,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status Updated");
 
-listenTasks();
+loadTasks();
 
 }
   
@@ -1167,7 +1214,7 @@ let newStatus = task.status==="Pending" ? "Completed" : "Pending";
 
 await update(ref(db,"tasks/"+id),{status:newStatus});
 
-listenTasks();
+loadTasks();
 
 }
 
@@ -1245,7 +1292,7 @@ due:formValues.due
 Swal.fire("Updated","Task updated successfully","success");
 await writeAuditLog("Task Manager","Update Task ("+formValues.title+")");
 
-listenTasks();
+loadTasks();
 
 }
 
@@ -1271,7 +1318,7 @@ await remove(ref(db,"tasks/"+id));
 Swal.fire("Deleted","Task removed","success");
 await writeAuditLog("Task Manager","Delete Task ("+task.title+")");
 
-listenTasks();
+loadTasks();
 
 }
 
@@ -1334,7 +1381,7 @@ await set(ref(db,"tasks/"+id+"/comments"),comments);
 
 Swal.fire("Comment added");
 
-listenTasks();
+loadTasks();
 
 }
   
@@ -1487,7 +1534,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status updated");
 
-listenTasks();   // ✅ correct refresh
+loadTasks();   // ✅ correct refresh
 
 }
 
@@ -2380,7 +2427,6 @@ contentArea.innerHTML = `
 loadMsgUsers();
 listenUserList();
 initTextarea();
-initTyping();
 
 }
 
@@ -2401,49 +2447,14 @@ second: "2-digit"
 }).replace(",", "");
 }
   
-function initTyping(){
-
-let input = document.getElementById("msgInput");
-
-if(!input) return;
-
-input.addEventListener("input", ()=>{
-
-if(!msgReceiver) return;
-
-set(ref(db,"typing/"+msgReceiver),{
-from: msgUser,
-status: true
-});
-
-// stop typing after 1 sec
-setTimeout(()=>{
-set(ref(db,"typing/"+msgReceiver),{
-from: msgUser,
-status: false
-});
-},1000);
-
-});
-
-}  
-
-  
 // LOAD USERS
-function loadMsgUsers(){
+async function loadMsgUsers(){
 
-// ✅ remove old listener
-if(window.msgUserListener) window.msgUserListener();
-
-// ✅ listen users + messages in real-time
-window.msgUserListener = onValue(ref(db), snapshot => {
-
+let users = await getUsers();
 let html = "";
 
-let dbData = snapshot.exists() ? snapshot.val() : {};
-
-let users = dbData.users ? Object.values(dbData.users) : [];
-let messages = dbData.messages ? dbData.messages : {};
+const snap = await get(ref(db,"messages"));
+let messages = snap.exists() ? snap.val() : {};
 
 users.forEach(u=>{
 
@@ -2451,33 +2462,24 @@ if(u.username !== msgUser){
 
 let unread = 0;
 let lastMsg = "";
-let lastTime = 0;
+let lastTime = "";
 
-// ✅ process messages
 Object.values(messages).forEach(m=>{
 
-// unread count
 if(m.sender === u.username && m.receiver === msgUser && m.status !== "seen"){
 unread++;
 }
 
-// last message
 if(
 (m.sender === msgUser && m.receiver === u.username) ||
 (m.sender === u.username && m.receiver === msgUser)
 ){
-if(m.time > lastTime){
 lastMsg = m.text || (m.file ? "📎 File" : "");
 lastTime = m.time;
-}
 }
 
 });
 
-// format time
-let timeText = lastTime ? new Date(lastTime).toLocaleTimeString() : "";
-
-// ✅ UI
 html += `
 <div onclick="selectMsgUser('${u.username}')"
 style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between">
@@ -2488,7 +2490,7 @@ style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;jus
 </div>
 
 <div style="text-align:right">
-<small>${timeText}</small><br>
+<small>${lastTime}</small><br>
 ${unread>0 ? `<span style="background:green;color:white;border-radius:50%;padding:4px 8px">${unread}</span>` : ""}
 </div>
 
@@ -2499,11 +2501,7 @@ ${unread>0 ? `<span style="background:green;color:white;border-radius:50%;paddin
 
 });
 
-// ✅ instant render
 document.getElementById("msgUserList").innerHTML = html;
-
-});
-
 }
   
 // SEND MESSAGE
@@ -2852,9 +2850,6 @@ function previewFile(src, type, name){
 
   
 </script>
-
-
-
   
 <div id="imgPreview" style="
 display:none;
