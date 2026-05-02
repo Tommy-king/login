@@ -871,6 +871,7 @@ display.value = "";
   // ...........To do list ...................//
 function openTodoPage(){
 
+// ✅ 1. SHOW UI INSTANTLY (no waiting for Firebase)
 contentArea.innerHTML = `
 
 <div class="card">
@@ -906,110 +907,57 @@ contentArea.innerHTML = `
 
 </div>
 
-<div class="mb-3">
-<button class="btn btn-dark btn-sm" onclick="openKanban()" data-role="Admin">>Kanban</button>
-<button class="btn btn-info btn-sm" onclick="openTaskDashboard()">Analytics</button>
-</div>
-
-<table id="todoTable" class="table table-bordered table-striped table-hover w-100">
-
+<table id="todoTable" class="table table-bordered table-striped w-100">
 <thead class="table-dark">
-
 <tr>
 <th>Task</th>
 <th>Priority</th>
 <th>Due Date</th>
 <th>Status</th>
 <th>Completed Date</th>
-<th>Assigned to</th>
+<th>Assigned To</th>
 <th>Assigned By</th>
-<th>No. of Days</th>
+<th>Days</th>
 <th>Comment</th>
 <th>Actions</th>
 </tr>
-
-<tr>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th><input class="form-control form-control-sm"></th>
-<th></th>
-<th></th>
-</tr>
-
 </thead>
-
-<tbody id="taskTable"></tbody>
-
+<tbody></tbody>
 </table>
 
 </div>
 </div>
-
 `;
-  
-  taskTable = $('#todoTable').DataTable({
-  
-  pageLength:10,
-  lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
-  
-  paging:true,
-  orderCellsTop:true,
-  
-  autoWidth:false,
-  responsive:false,
-  
-  dom:'Blfrtip',
-  
-  buttons:[
-  'colvis',
-  {extend:'excel',title:'Task_Report'},
-  {extend:'csv',title:'Task_Report'},
-  {extend:'print'}
-  ],
-  
-  initComplete:function(){
-  
-  let api=this.api();
-  
-  api.columns().every(function(index){
-  
-  let column=this;
-  
-  $('input', api.table().header().rows[1].cells[index])
-  .on('keyup change clear',function(){
-  
-  column.search(this.value,true,false).draw();
-  
-  });
-  
-  });
-  
-  }
-  
-  });
 
 
-// ⭐ PASTE STATUS FILTER CODE HERE
-$('#todoTable thead tr:eq(1) th:eq(3) input').on('keyup change', function () {
+// ✅ 2. DESTROY OLD TABLE (important)
+if ($.fn.DataTable.isDataTable('#todoTable')) {
+    $('#todoTable').DataTable().destroy();
+}
 
-    let val = this.value;
 
-    taskTable.column(3)
-        .search(val ? val : '', true, false)
-        .draw();
-
+// ✅ 3. INIT TABLE IMMEDIATELY
+taskTable = $('#todoTable').DataTable({
+pageLength:10,
+lengthMenu:[[10,50,100,-1],[10,50,100,"All"]],
+scrollY:"400px",
+scrollCollapse:true,
+paging:true,
+fixedHeader:true,
+autoWidth:false
 });
 
 
+// ✅ 4. LOAD USERS (dropdown)
 loadUsersForAssign();
-loadTasks();
+
+
+// ✅ 5. START REAL-TIME LISTENER (MAIN ENGINE)
+listenTasks();
+
 }
-// LOAD USERS INTO ASSIGN DROPDOWN
+  
+  // LOAD USERS INTO ASSIGN DROPDOWN
 async function loadUsersForAssign(){
 
 let loggedUser=getLoggedUser();
@@ -1075,7 +1023,7 @@ async function addTask() {
   Swal.fire("Success", "Task created", "success");
   await writeAuditLog("Task Manager","Add Task ("+title+")");
 
-  loadTasks();
+  listenTasks();
 }
   
 
@@ -1096,27 +1044,32 @@ return `${day}-${month}-${year}`;
 
 
 // LOAD TASKS
-async function loadTasks(){
+function listenTasks(){
 
-const snapshot = await get(ref(db,"tasks"));
-
-let data=[];
 let loggedUser = getLoggedUser();
 
-snapshot.forEach(child=>{
+// ✅ REMOVE OLD LISTENER (VERY IMPORTANT)
+if(window.taskListener) window.taskListener();
+
+// ✅ REAL-TIME LISTENING
+window.taskListener = onValue(ref(db,"tasks"), snapshot => {
+
+let data = [];
+
+snapshot.forEach(child => {
 
 let t = child.val();
 
-// ⭐ USER FILTER
+// role filter
 if(loggedUser.role !== "Admin" && t.assignedTo !== loggedUser.username){
-return; // skip other users tasks
+return;
 }
 
 let commentCount = t.comments ? t.comments.length : 0;
 
 data.push([
-t.title,
-t.priority,
+t.title || "",
+t.priority || "",
 formatDate(t.due),
 
 `<span onclick="changeStatus('${t.id}','${t.status}')"
@@ -1125,35 +1078,35 @@ ${t.status}
 </span>`,
 
 t.completedDate || "-",
-t.assignedTo,
+t.assignedTo || "",
 t.assignedBy || "-",
 calculateDays(t.due,t.completedDate),
 
-`<span onclick="taskComments('${t.id}')"
-style="cursor:pointer;color:#2563eb">
+`<span onclick="taskComments('${t.id}')">
 <i class="fa fa-comment"></i> ${commentCount}
 </span>`,
 
-`
-<i class="fa fa-edit action"
-onclick="editTask('${t.id}')"></i>
-
-<i class="fa fa-trash action"
-onclick="deleteTask('${t.id}')"></i>
-`
+`<i class="fa fa-edit action" onclick="editTask('${t.id}')"></i>
+ <i class="fa fa-trash action" onclick="deleteTask('${t.id}')"></i>`
 ]);
 
 });
 
+
+// ✅ INSTANT UI UPDATE (no delay)
+if(taskTable){
 taskTable.clear();
 taskTable.rows.add(data);
 taskTable.draw();
-taskTable.columns.adjust();
+}
+
+});
 
 }
-  
 
-  async function changeStatus(id,currentStatus){
+  
+  
+async function changeStatus(id,currentStatus){
 
 const { value: status } = await Swal.fire({
 title:"Update Status",
@@ -1187,7 +1140,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status Updated");
 
-loadTasks();
+listenTasks();
 
 }
   
@@ -1214,7 +1167,7 @@ let newStatus = task.status==="Pending" ? "Completed" : "Pending";
 
 await update(ref(db,"tasks/"+id),{status:newStatus});
 
-loadTasks();
+listenTasks();
 
 }
 
@@ -1292,7 +1245,7 @@ due:formValues.due
 Swal.fire("Updated","Task updated successfully","success");
 await writeAuditLog("Task Manager","Update Task ("+formValues.title+")");
 
-loadTasks();
+listenTasks();
 
 }
 
@@ -1318,7 +1271,7 @@ await remove(ref(db,"tasks/"+id));
 Swal.fire("Deleted","Task removed","success");
 await writeAuditLog("Task Manager","Delete Task ("+task.title+")");
 
-loadTasks();
+listenTasks();
 
 }
 
@@ -1381,7 +1334,7 @@ await set(ref(db,"tasks/"+id+"/comments"),comments);
 
 Swal.fire("Comment added");
 
-loadTasks();
+listenTasks();
 
 }
   
@@ -1534,7 +1487,7 @@ await update(ref(db,"tasks/"+id),updateData);
 
 Swal.fire("Status updated");
 
-loadTasks();   // ✅ correct refresh
+listenTasks();   // ✅ correct refresh
 
 }
 
