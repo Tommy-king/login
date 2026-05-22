@@ -21,3 +21,100 @@
   <br /><br />
   <button onclick="login()">Login</button>
 </div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+      <div class="logo"><i class="fa fa-bars" onclick="toggleSidebar()" style="cursor:pointer"></i>Admin System</div>
+    <div class="ribbon">
+<!-- Top Ribbon -->
+        <button onclick="openWebInteraction('https://anotepad.com/')" data-role="Admin,User">Notepad</button>
+        <button onclick="openWebInteraction('https://chatgpt.com/')" data-role="Admin,User">ChatGPT</button>
+        <button onclick="createUserPage()" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+        <button onclick="openExcelPage()" data-role="Admin,User"><i class="fa fa-file-excel"></i> Open Excel</button>
+        <button onclick="openTodoPage()" data-role="Admin,User"><i class="fa fa-list-check"></i> To-Do List </button>
+      <button onclick="openMessagePage()" data-role="Admin,User"><i class="fa fa-comments"></i> Messages</button>
+    </div>
+    
+        <div class="user-area" style="position:relative; display:flex; align-items:center; gap:10px;">
+          
+            <div style="position:relative;">
+              
+                 <i class="fa fa-bell"
+                 onclick="toggleNotifications()"
+                 style="cursor:pointer;font-size:18px;">
+              </i>
+              
+              <span id="notifyCount"
+              style="
+              position:absolute;
+              top:-5px;
+              right:-10px;
+              background:red;
+              color:white;
+              border-radius:50%;
+              padding:3px 7px;
+              font-size:11px;">
+              0
+              </span>
+              
+              <div id="notificationBox"
+              style="
+              display:none;
+              position:absolute;
+              right:0;
+              top:30px;
+              width:300px;
+              background:white;
+              color:black;
+              border-radius:6px;
+              box-shadow:0 4px 10px rgba(0,0,0,0.2);
+              z-index:999;
+              ">
+              
+            <div style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; position:relative;">
+              Notifications
+              <span style="position:absolute; top:5px; right:10px; cursor:pointer; font-weight:bold;"
+                    onclick="document.getElementById('notificationBox').style.display='none';">
+                X
+              </span>
+            </div>
+              
+              <div id="notificationList"
+              style="max-height:300px;overflow:auto">
+              </div>
+              
+              <div style="padding:8px;text-align:center;border-top:1px solid #eee">
+              <button onclick="clearAllNotifications()" class="btn btn-sm btn-danger">
+              Clear All
+              </button>
+              </div>
+              
+              </div>
+              
+            </div>
+        
+          <span id="displayUser"
+                onclick="changePassword()"
+                style="cursor:pointer;font-weight:bold;">
+          </span>
+        
+          <button onclick="event.stopPropagation(); logout()">Logout</button>
+        
+        </div>
+  </div>
+
+
+  <div class="sidebar">
+    <button onclick="home()"><i class="fa fa-home"></i> Dashboard</button>
+    <button onclick="createUserPage()" id="menuCreate" data-role="Admin"><i class="fa fa-user-plus"></i> Create User</button>
+    <button onclick="viewUsers()" id="menuUsers" data-role="Admin"><i class="fa fa-users"></i> User Management</button>
+    <button onclick="openExcelPage()" data-role="Admin"> <i class="fa fa-file-excel"></i> Excel Viewer</button>
+    <button onclick="openAuditLogs()" data-role="Admin"><i class="fa fa-history"></i> Audit Logs</button>
+  </div>
+
+  <!-- Dynamic content container -->
+  <div class="content" id="contentArea"></div>
+</div>
+
+
