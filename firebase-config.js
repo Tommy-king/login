@@ -1,4 +1,4 @@
-export const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyDvBg3NjojMJyfwS2ekhe6KnXjcgmV5qGQ",
     authDomain: "anil-rentala.firebaseapp.com",
     databaseURL: "https://anil-rentala-default-rtdb.firebaseio.com",
@@ -8,3 +8,4 @@ export const firebaseConfig = {
     appId: "1:94163866842:web:12caea0e85572c37e341e3",
     measurementId: "G-YXJ6HLSVBE"
   };
+window.firebaseConfig = firebaseConfig;
