@@ -12,3 +12,12 @@
   window.login = () => import("./app.js").then(m => m.login());
   window.logout = () => import("./app.js").then(m => m.logout());
 </script>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <h2>User Login</h2>
+  <input id="loginUser" placeholder="Username" />
+  <input id="loginPass" type="password" placeholder="Password" />
+  <br /><br />
+  <button onclick="login()">Login</button>
+</div>
